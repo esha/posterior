@@ -1,0 +1,48 @@
+{
+  "name": "API",
+  "title": "API(.js)",
+  "description": "Create friendly, powerful interfaces that use $.ajax to talk to a backend API",
+  "version": "0.1.0",
+  "homepage": "https://github.com/nbubna/API",
+  "author": {
+    "name": "Nathan Bubna",
+    "email": "nathan@esha.com",
+    "url": "http://esha.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/nbubna/API.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nbubna/API/issues"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://github.com/nbubna/API/blob/master/LICENSE-MIT"
+    }
+  ],
+  "engines": {
+    "node": ">= 0.8.0"
+  },
+  "scripts": {
+    "test": "grunt jshint qunit --verbose"
+  },
+  "dependencies": {
+    "store2": "~2.1.0"
+  },
+  "devDependencies": {
+    "grunt-contrib-jshint": "~0.7.0",
+    "grunt-contrib-qunit": "~0.2.0",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-uglify": "~0.2.0",
+    "grunt-contrib-watch": "~0.4.0",
+    "grunt-contrib-clean": "~0.4.0",
+    "grunt-contrib-compress": "~0.5.2",
+    "grunt-cli": "~0.1",
+    "grunt": "~0.4.1"
+  },
+  "keywords": [
+    "api(.js)"
+  ]
+}
