@@ -1,27 +1,13 @@
-# API(.js)
+[JCX][home] enables smart, JSON-configured XHR communication for your APIs.
 
-Create friendly, powerful interfaces that use $.ajax to talk to a backend API
+[home]: http://esha.github.io/jcx
 
-## Getting Started
-Download the [production version][min] or the [development version][max].
+Download: [jcx.min.js][full-min] or [jcx.js][full] [![Build Status](https://travis-ci.org/esha/jcx.png?branch=master)](https://travis-ci.org/esha/jcx)  
+[Bower][bower]: `bower install jcx`  
+[NPM][npm]: `npm install jcx`   
+[Component][component]: `component install esha/jcx`  
 
-[min]: https://raw.github.com/nbubna/API/master/dist/API.min.js
-[max]: https://raw.github.com/nbubna/API/master/dist/API.js
+### Release History
+* 2014-08-13 [v0.2.0][] (form[ajax], textarea[flex], validate)
 
-In your web page:
-
-```html
-<script src="dist/API.min.js"></script>
-<script>
-API.external();
-</script>
-```
-
-## Documentation
-_(Coming soon)_
-
-## Examples
-_(Coming soon)_
-
-## Release History
-_(Nothing yet)_
+[v0.2.0]: https://github.com/esha/jcx/tree/0.2.0

@@ -1,48 +1,50 @@
 {
-  "name": "API",
-  "title": "API(.js)",
-  "description": "Create friendly, powerful interfaces that use $.ajax to talk to a backend API",
+  "name": "jcx",
+  "title": "JCX",
+  "description": "JSON-configured XHR communication for your APIs",
   "version": "0.1.0",
-  "homepage": "https://github.com/nbubna/API",
+  "homepage": "http://esha.github.io/jcx/",
   "author": {
-    "name": "Nathan Bubna",
+    "name": "ESHA Research",
     "email": "nathan@esha.com",
-    "url": "http://esha.com"
+    "url": "http://www.esha.com"
   },
+  "main": "dist/jcx.js",
   "repository": {
     "type": "git",
-    "url": "git://github.com/nbubna/API.git"
+    "url": "git://github.com/esha/jcx.git"
   },
   "bugs": {
-    "url": "https://github.com/nbubna/API/issues"
+    "url": "https://github.com/esha/jcx/issues"
   },
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://github.com/nbubna/API/blob/master/LICENSE-MIT"
+      "url": "https://github.com/esha/jcx/blob/master/LICENSE"
     }
   ],
-  "engines": {
-    "node": ">= 0.8.0"
-  },
   "scripts": {
-    "test": "grunt jshint qunit --verbose"
+    "test": "grunt qunit"
   },
   "dependencies": {
-    "store2": "~2.1.0"
+    "store2": "^2.1.6"
   },
   "devDependencies": {
-    "grunt-contrib-jshint": "~0.7.0",
+    "grunt-contrib-jshint": "~0.6.0",
     "grunt-contrib-qunit": "~0.2.0",
     "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-uglify": "~0.2.0",
     "grunt-contrib-watch": "~0.4.0",
     "grunt-contrib-clean": "~0.4.0",
-    "grunt-contrib-compress": "~0.5.2",
-    "grunt-cli": "~0.1",
-    "grunt": "~0.4.1"
+    "grunt-cli": "^0.1",
+    "grunt": "~0.4.1",
+    "grunt-contrib-compress": "~0.5.2"
   },
   "keywords": [
-    "api(.js)"
+    "JSON",
+    "AJAX",
+    "XHR",
+    "config",
+    "API"
   ]
 }

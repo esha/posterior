@@ -5,7 +5,7 @@ module.exports = function(grunt) {
   // Project configuration.
   grunt.initConfig({
     // Metadata.
-    pkg: grunt.file.readJSON('package.json'),
+    pkg: grunt.file.readJSON('bower.json'),
     banner: '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
       '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
       '<%= pkg.homepage ? "* " + pkg.homepage + "\\n" : "" %>' +
@@ -15,22 +15,23 @@ module.exports = function(grunt) {
     clean: {
       files: ['dist']
     },
-    concat: {
+    frame: {
       options: {
-        banner: '<%= banner %>',
-        stripBanners: true
+        frame: 'src/frame.js',
       },
       dist: {
-        src: ['src/<%= pkg.name %>.js'],
+        src: ['src/xhr.js',
+              'src/conf.js'],
         dest: 'dist/<%= pkg.name %>.js'
       },
     },
     uglify: {
       options: {
-        banner: '<%= banner %>'
+        banner: '<%= banner %>',
+        report: 'gzip'
       },
       dist: {
-        src: '<%= concat.dist.dest %>',
+        src: ['dist/<%= pkg.name %>.js'],
         dest: 'dist/<%= pkg.name %>.min.js'
       },
     },
@@ -57,7 +58,14 @@ module.exports = function(grunt) {
         options: {
           jshintrc: 'src/.jshintrc'
         },
-        src: ['src/**/*.js']
+        src: ['src/**/*.js',
+              '!src/*frame.js']
+      },
+      dist: {
+        options: {
+          jshintrc: 'src/.jshintrc-dist'
+        },
+        src: ['dist/*.js']
       },
       test: {
         options: {
@@ -83,8 +91,8 @@ module.exports = function(grunt) {
   });
 
   // These plugins provide necessary tasks.
+  grunt.loadTasks('tasks');
   grunt.loadNpmTasks('grunt-contrib-clean');
-  grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-qunit');
   grunt.loadNpmTasks('grunt-contrib-jshint');
@@ -92,6 +100,6 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-compress');
 
   // Default task.
-  grunt.registerTask('default', ['jshint', 'clean', 'concat', 'uglify', 'qunit', 'compress']);
+  grunt.registerTask('default', ['clean', 'frame', 'jshint', 'uglify', 'compress', 'qunit']);
 
 };

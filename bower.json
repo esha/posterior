@@ -1,0 +1,49 @@
+{
+  "name": "jcx",
+  "version": "0.1.0",
+  "main": "dist/jcx.js",
+  "description": "JSON-configured XHR communication for your APIs",
+  "keywords": [
+    "JSON",
+    "AJAX",
+    "XHR",
+    "config",
+    "API"
+  ],
+  "author": {
+    "name": "ESHA Research",
+    "email": "nathan@esha.com",
+    "url": "http://www.esha.com/"
+  },
+  "homepage": "http://esha.github.io/jcx/",
+  "bugs": "https://github.com/esha/jcx/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com:esha/jcx.git"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "https://raw.githubusercontent.com/esha/jcx/master/LICENSE"
+    },
+    {
+      "type": "GPL",
+      "url": "http://www.gnu.org/licenses/gpl.html"
+    }
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "components",
+    "libs",
+    "test",
+    "src",
+    "Gruntfile.js"
+  ],
+  "dependencies": {
+    "store2": "^2.1.6"
+  },
+  "devDependencies": {
+    "qunit": "~1.15.0"
+  }
+}

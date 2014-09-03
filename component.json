@@ -1,0 +1,21 @@
+{
+    "name": "jcx",
+    "repo": "esha/jcx",
+    "description": "JSON-configured XHR communication for your APIs",
+    "version": "0.1.0",
+    "keywords": [
+        "JSON",
+        "AJAX",
+        "XHR",
+        "config",
+        "API"
+    ],
+    "dependencies": {},
+    "development": {},
+    "license": "MIT",
+    "main": "src/component.js",
+    "scripts": [
+        "src/component.js",
+        "dist/jcx.js"
+    ]
+}

@@ -12,7 +12,6 @@
   "eqnull": true,
   "browser": true,
   "predef": [
-    "API",
     "QUnit",
     "module",
     "test",
