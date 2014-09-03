@@ -2,7 +2,7 @@
   "name": "jcx",
   "version": "0.1.0",
   "main": "dist/jcx.js",
-  "description": "JSON-configured XHR communication for your APIs",
+  "description": "Hierarchical configuration of JSON XHR communication for your APIs",
   "keywords": [
     "JSON",
     "AJAX",
@@ -41,7 +41,8 @@
     "Gruntfile.js"
   ],
   "dependencies": {
-    "store2": "^2.1.6"
+    "store2": "^2.1.6",
+    "es6-promise": "~1.0.0"
   },
   "devDependencies": {
     "qunit": "~1.15.0"

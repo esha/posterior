@@ -12,6 +12,7 @@
   "eqnull": true,
   "browser": true,
   "predef": [
+    "JCX",
     "QUnit",
     "module",
     "test",

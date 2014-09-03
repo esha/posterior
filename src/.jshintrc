@@ -1,6 +1,7 @@
 {
   "curly": true,
   "eqeqeq": true,
+  "evil": true,
   "immed": true,
   "latedef": false,
   "newcap": true,
@@ -12,6 +13,6 @@
   "eqnull": true,
   "browser": true,
   "predef": [
-    "Eventi"
+    "Promise"
   ]
 }

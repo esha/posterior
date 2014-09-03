@@ -65,7 +65,7 @@ XHR.headers = function(xhr) {
     return xhr.responseHeaders = headers;
 };
 
-XHR.end = function(xhr, result) {
+XHR.end = function(xhr) {
     XHR.active--;
     var handler = xhr.options[xhr.status] || XHR[xhr.status];
     return handler && handler(xhr) || xhr;

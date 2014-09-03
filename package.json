@@ -1,7 +1,7 @@
 {
   "name": "jcx",
   "title": "JCX",
-  "description": "JSON-configured XHR communication for your APIs",
+  "description": "Hierarchical configuration of JSON XHR communication for your APIs",
   "version": "0.1.0",
   "homepage": "http://esha.github.io/jcx/",
   "author": {
@@ -34,7 +34,6 @@
     "grunt-contrib-qunit": "~0.2.0",
     "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-uglify": "~0.2.0",
-    "grunt-contrib-watch": "~0.4.0",
     "grunt-contrib-clean": "~0.4.0",
     "grunt-cli": "^0.1",
     "grunt": "~0.4.1",

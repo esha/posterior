@@ -1,4 +1,4 @@
-(function(D) {
+(function() {
 /*
 ======== A Handy Little QUnit Reference ========
 http://api.qunitjs.com/
@@ -25,4 +25,4 @@ Test assertions:
         ok(JCX.xhr);
     });
 
-}(document));
+}());
