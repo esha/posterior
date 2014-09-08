@@ -1,48 +1,42 @@
-/*! jcx - v0.1.0 - 2014-09-02
+/*! jcx - v0.1.0 - 2014-09-07
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
 (function(store) {
     "use strict";
 
-var JCX = window.JCX = {};
-var XHR = JCX.xhr = function(options) {
-    var xhr = new XMLHttpRequest(),
-        method = XHR.methodMap[options.method] || options.method;
-    xhr.options = options;
-    xhr.open(method, options.url, options.async, options.username, options.password);
-    if (options.xhrFields) {
-        for (var field in options.xhrFields) {
-            xhr[field] = options.xhrFields[field];
+var JCX = window.JCX = function(config) {
+    return JCX.api(config);
+};
+var XHR = JCX.xhr = function() {
+    return XHR.main.apply(this, arguments);
+},
+global = XHR.global = {};
+
+XHR.main = function(cfg) {
+    var xhr, 
+        promise;
+
+    if (cfg.cache) {
+        xhr = store(XHR.key(cfg));
+        if (xhr) {
+            promise = Promise.resolve(xhr);
         }
     }
-    if (options.mimeType) {
-        xhr.overrideMimeType(options.mimeType);
-    }
-    if (options.headers) {
-        for (var header in options.headers) {
-            xhr.setRequestHeader(header, options.headers[header]);
+    if (!promise) {
+        xhr = XHR.create(cfg);
+        promise = XHR.promise(xhr, cfg);
+        if (cfg.cache) {
+            promise = promise.then(XHR.cache);
         }
     }
 
-    var promise = new Promise(function(resolve, reject) {
-        xhr.onload = function() {
-            XHR.json(xhr);
-            XHR.headers(xhr);
-            var status = xhr.status || 200;// file: reports 0, treat as 200
-            (status >= 200 && status < 400 ? resolve : reject)(xhr);
-        };
-        xhr.onerror = function() {
-            reject(xhr);
-        };
+    promise = promise.then(cfg.then, cfg.catch)
+        .then(cfg.always, cfg.always)
+        .then(global.then, global.catch)
+        .then(global.always, global.always);
 
-        XHR.active++;
-        xhr.send(options.data || null);
-    })
-    .then(XHR.end, XHR.end)
-    .then(options.success, options.error)
-    .then(XHR.success, XHR.error);
-
+    xhr.cfg = cfg;
     promise.xhr = xhr;
     return promise;
 };
@@ -51,7 +45,55 @@ XHR.methodMap = {
     PATCH: 'POST'
 };
 
-XHR.active = 0;
+XHR.create = function(cfg) {
+    var method = XHR.methodMap[cfg.method] || cfg.method,
+        xhr = new XMLHttpRequest();
+    xhr.open(method, cfg.url, cfg.async, cfg.username, cfg.password);
+    if (cfg.xhrFields) {
+        for (var field in cfg.xhrFields) {
+            xhr[field] = cfg.xhrFields[field];
+        }
+    }
+    if (cfg.mimeType) {
+        xhr.overrideMimeType(cfg.mimeType);
+    }
+    if (cfg.headers) {
+        for (var header in cfg.headers) {
+            xhr.setRequestHeader(header, cfg.headers[header]);
+        }
+    }
+    return xhr;
+};
+
+XHR.promise = function(xhr, cfg) {
+    return new Promise(function(resolve, reject) {
+        xhr.onload = function() {
+            try {
+                XHR.json(xhr);
+                XHR.headers(xhr);
+                var status = xhr.status || 200;// file: reports 0, treat as 200
+                (status >= 200 && status < 400 ? resolve : reject)(xhr);
+            } catch (e) {
+                xhr.error = e;
+                reject(xhr);
+            }
+        };
+        xhr.onerror = function() {
+            //TODO: set error?
+            reject(xhr);
+        };
+
+        XHR.active++;
+        try {
+            xhr.send(cfg.data ? JSON.stringify(cfg.data) : null);
+        } catch (e) {
+            xhr.error = e;
+            reject(xhr);
+        }
+    })
+    .then(XHR.end, XHR.end)
+    .catch(cfg.retry ? XHR.retry : null);
+};
 
 XHR.json = function(xhr) {
     try {
@@ -73,276 +115,267 @@ XHR.headers = function(xhr) {
     return xhr.responseHeaders = headers;
 };
 
+XHR.active = 0;
 XHR.end = function(xhr) {
+    window.console.log('end', this, xhr);
     XHR.active--;
-    var handler = xhr.options[xhr.status] || XHR[xhr.status];
+    var handler = xhr.cfg[xhr.status] || global[xhr.status];
     return handler && handler(xhr) || xhr;
 };
 
-var _ = JCX._ = {
-    version: "0.1.0",
-    build: function(conf, parent, key) {
-        var api = function(){ return _.promise.apply(api, arguments); },
-            props = api.properties = {
-                self: api,
-                selfName: key,
-                parent: parent
-            };
-        for (var name in conf) {
-            if (conf.hasOwnProperty(name)) {
-                var val = conf[name],
-                    method = typeof val;
-                if (method === 'object') {
-                    var child = _.build(val, props, name);
-                    api[name] = child;
-                    props[name] = child.properties;
-                } else {
-                    if (method === 'function') {
-                        val = val.bind(props);
-                    }
-                    if (name.charAt(0) === '@') {
-                        name = name.substring(1);
-                        api[name] = val;
-                    }
-                    props[name] = val;
-                }
-            }
+XHR.key = function(cfg) {
+    return cfg.url + '|' +
+        (cfg.method || 'GET') + '|' +
+        (cfg.data ? JSON.stringify(cfg.data) : '');
+};
+XHR.cache = function(xhr) {
+    var cfg = xhr.cfg;
+    store(XHR.key(cfg), XHR.safeCopy(xhr), cfg.cache);
+};
+XHR.safeCopy = function(object) {
+    var copy = {};
+    for (var name in object) {
+        var value = object[name],
+            type = typeof value;
+        if (value && type !== 'function') {
+            copy[name] = type === 'object' ? XHR.safeCopy(value) : value;
         }
-        var auto = _.closest(props, 'auto');
-        if (auto === true || auto >= 0) {
-            setTimeout(api, auto === true ? 0 : auto);
-        }
-        return api;
-    },
-    promise: function() {
-        var props = this.properties,
-            args = slice(arguments),
-            then =  [],
-            promise = _.closest(props, 'cache') === true && props._promise;
-
-        // extract function arg for implied 'then'
-        if (typeof args[args.length-1] === "function") {
-            then = args.pop().bind(props);
-        }
-
-        if (!promise) {
-            // find and resolve configured dependencies, if any
-            var deps = _.find(props, 'requires').map(_.resolve);
-            if (deps.length) {
-                promise = Promise.all(deps).then(function() {
-                    return _.xhr(props, args, then);
-                });
-            } else {
-                promise = _.xhr(props, args, then);
-            }
-            props._promise = promise;
-        } else if (then) {
-            promise.then(then);// won't get status, xhr, opts
-        }
-        return promise;
-    },
-    xhr: function(props, args, then) {
-        var data = _.config('data', props, args),
-            url = _.url(props, data, args),
-            method = _.closest(props, 'method');
-        if (_.empty(data)) {
-            data = undefined;
-        }
-
-        var options = _.config('options', props, [method, url, data]);
-        if (url && !('url' in options)){ options.url = url; }
-        if (method && !('method' in options)){ options.method = method; }
-        if (data && !('data' in options)){ options.data = data; }
-        if (then) {
-            options.then = options.then ? options.then.concat(then) : then;
-        }
-
-        var request = _.request(props, options);
-        return _.responders(props, request, options);
-    },
-    request: function(props, options) {
-        var minutes = _.closest(props, 'cache');
-        if (typeof minutes === "number") {// cache === true is handled by _.promise
-            if (!props._cached) {
-                props._cacheKey = _.cacheKey(options);
-                props._cached = store(props._cacheKey);
-            }
-            return props._cached ? Promise.resolve({responseJson:props._cached}) :
-                XHR(options).then(function(json) {
-                    store(props._cacheKey, props._cached = json, minutes);
-                    setTimeout(function() {
-                        delete props._cached;
-                    }, minutes * 60000);
-                });
-        }
-        return XHR(options);
-    },
-    cacheKey: function(options) {
-        return options.url + '|' +
-            (options.method || 'GET') + '|' +
-            (options.data ? JSON.stringify(options.data) : '');
-    },
-    responders: function(props, promise, options) {
-        // each then returns a new promise
-        _.find(props, 'then').forEach(function(fn) {
-            promise = promise.then(function(result, status, xhr) {
-                var args = slice(arguments);
-                args.push(options);
-                options.result = result;
-                options.status = status;
-                options.xhr = xhr;
-                return fn.apply(props, args);
-            });
-        });
-        _.callback('then', props, promise, options);
-        _.callback('fail', props, promise, options);
-        _.callback('always', props, promise, options);
-        return promise;
-    },
-    /*TODO: make retry high level, replacing internal xhr sucks
-    retrySetup: function(props, xhr, options) {
-        var retry = _.closest(props, 'retry');
-        if (retry) {
-            xhr.fail(function() {
-                delete props._xhr;
-                props._retryIn = props._retryIn ? props._retryIn * 2 : retry;
-                setTimeout(function() {
-                    props._xhr = _.request(props, options);
-                    _.handlers(props, options);
-                }, props._retryIn);
-            }).then(function() {
-                delete props._retryIn;
-            });
-        }
-    },*/
-    callback: function(name, props, xhr, options) {
-        var fns = _.find(props, name);
-        if (options[name]) {
-            fns = fns.concat(options[name]);
-        }
-        if (fns.length) {
-            if (props.prioritize) {// by default callbacks run from wide to narrow
-                fns.reverse();
-            }
-            xhr[name](function() {
-                var args = slice(arguments);
-                if (args.length === 1) {// when there was a 'then' involved
-                    args.push(options.status, name === 'then' ? options.xhr : options.result);
-                }
-                args.push(options);// give callbacks the usual, plus the conf options
-                for (var i=0,m=fns.length; i<m; i++) {
-                    if (fns[i].apply(props, args) === false) {
-                        break;
-                    }
-                }
-            });
-        }
-    },
-    closest: function(props, property) {
-        var override = '='+property;
-        if (override in props) {
-            return props[override];
-        }
-        var priv = '_'+property;
-        if (priv in props) {
-            return props[priv];
-        }
-        do {
-            if (property in props) {
-                return props[property];
-            }
-        } while ((props = props.parent));
-    },
-    find: function(props, property) {
-        var found = [],
-            priv = '_'+property,
-            override = '='+property;
-        if (override in props) {
-            _.prepend(props[override], found);
-            return found;
-        }
-        if (priv in props) {
-            _.prepend(props[priv], found);
-        }
-        do {
-            if (property in props) {
-                _.prepend(props[property], found);
-            }
-        } while ((props = props.parent));
-        return found;
-    },
-    prepend: function(val, array) {
-        if (Array.isArray(val)) {
-            array.unshift.apply(array, val);
-        } else {
-            array.unshift(val);
-        }
-    },
-    config: function(name, props, args) {
-        var sources = _.find(props, name),
-            config = {};
-        for (var i=0,m=sources.length; i<m; i++) {
-            var cfg = sources[i];
-            if (typeof cfg === "function") {
-                cfg = cfg.apply(props, args);
-            }
-            for (var k in cfg) {
-                config[k] = cfg[k];
-            }
-        }
-        return config;
-    },
-    url: function(props, data, args) {
-        var sources = _.find(props, 'url'),
-            url = '';
-        for (var i=sources.length-1; i>=0; i--) {
-            var source = sources[i];
-            if (typeof source === "function") {
-                url = source.apply(props, data);
-                break;
-            } else {
-                url = source + url;
-            }
-        }
-        while (url.indexOf('..') >= 0) {
-            url = url.replace(/[\/\?\&][^\/\.\?\&]+[\/\?\&]?\.\.([\/\?\&]?)/, '$1');
-        }
-        return _.fill(url, data, args);
-    },
-    fill: function(url, data, args) {
-        data = data || {};
-        var key,
-            u = url,
-            re = /\{(\w+)\}/g;
-        while ((key = re.exec(url))) {
-            key = key[1];
-            var val = data[key];
-            if (val === null || val === undefined) {
-                val = key in args ? args[key] : '';
-            }
-            u = u.replace(new RegExp('\\{'+key+'}'), val);
-            delete data[key];
-        }
-        return u;
-    },
-    empty: function(o) {
-        for (var k in o){ return !k; }
-        return true;
-    },
-    refRE: /^([\w\$]+)?((\.[\w\$]+)|\[(\d+|'(\\'|[^'])+'|"(\\"|[^"])+")\])*$/,
-    resolve: function(ref) {
-        if (_.refRE.test(ref)) {
-            ref = eval('window'+(ref.charAt(0) !== '[' ? '.'+ref : ref)) || ref;
-        }
-        if (typeof ref === "function") {
-            ref = ref();
-        }
-        return ref;
     }
-},
-slice = Function.prototype.call.bind(Array.prototype.slice),
-API = _.build;
-API._ = _;
+    return copy;
+};
 
+XHR.retry = function(xhr) {
+    var retry = xhr.cfg.retry || global.retry;
+    if (retry) {
+        var cfg = xhr.cfg;
+        return new Promise(function(resolve) {
+            setTimeout(function() {
+                cfg.retry = retry * 2;
+                resolve(XHR(cfg));
+            }, retry);
+        });
+    }
+    return xhr;
+};
+
+/*
+'conf': 'standard config, combine w/ancestor'
+'_private': 'this config not inherited'
+'!conf': 'ignore ancestor'
+
+'.util': 'API prop/fn'
+'@sub': { 'sub API': 'to build' }
+
+requires: [testFn, 'name.of.api']
+auto: true//'call async upon build'
+
+_self, parent, name are reserved
+
+string values are processed at call-time against data/conf/window
+function-function concat results in promise fn wrapper
+function-* concat becomes result of calling fn w/* as arg
+object concat means copy/merge
+string/int concat means usual
+boolean concat means &&
+
+*/
+var API = JCX.api = function() {
+    return API.build.apply(this, arguments);
+};
+
+API.build = function(config, parent) {
+    var fn = function(data) {
+        return API.main(fn, data);
+    };
+    fn.cfg = {
+        _fn: fn,
+        _parent: parent,
+        _private: {}
+    };
+    fn.config = API.config;
+    for (var name in config) {
+        API.set(fn.cfg, name, config[name]);
+    }
+    if (API.get(fn.cfg, 'auto')) {
+        setTimeout(fn, 0);
+    }
+    return fn;
+};
+
+API.main = function(fn, data) {
+    var cfg = API.getAll(fn.cfg);
+    API.process(cfg, data);
+    var deps = cfg.requires;
+    if (deps) {
+        return Promise.all(deps.map(API.require.bind(cfg))).then(function() {
+            return XHR(cfg);
+        });
+    }
+    return XHR(cfg);
+};
+
+API.require = function(req) {
+    var type = typeof req;
+    if (type === 'string') {
+        try {
+            req = eval(req);
+        } catch (e) {
+            return Promise.reject(new Error('Could not resolve "'+req+'".'));
+        }
+    }
+    if (type === 'function') {
+        var ret = req();
+        return Promise.resolve(ret === undefined ? req : ret);
+    }
+    return req ? Promise.resolve(req) : Promise.reject(req);
+};
+
+API.config = function(name, value) {
+    return name ?
+        value === undefined ?
+            API.get(this.cfg, name) :
+            API.set(this.cfg, name, value) :
+        API.getAll(this.cfg);
+};
+
+API.process = function(cfg, data) {
+    for (var name in cfg) {
+        var value = cfg[name];
+        if (typeof value === 'string') {
+            value = cfg[name] = API.fill(value, cfg, data);
+        }
+        // special handling for URLs
+        if (name === 'url') {
+            while (value.indexOf('..') >= 0) {
+                value = value.replace(/[\/\?\&][^\/\.\?\&]+[\/\?\&]?\.\.([\/\?\&]?)/, '$1');
+            }
+            cfg.url = value;
+        }
+    }
+};
+
+API.fill = function(string, cfg, data) {
+    data = data || {};
+    var key,
+        str = string,
+        re = /\{(\w+)\}/g;
+    while ((key = re.exec(string))) {
+        key = key[1];
+        var val = data[key];
+        if (val === null || val === undefined) {
+            val = key in cfg ? cfg[key] : '';
+        }
+        str = str.replace(new RegExp('\\{'+key+'}'), val);
+        delete data[key];
+    }
+    return str;
+};
+
+API.getAll = function(cfg, inheriting) {
+    var all = cfg._parent ? API.getAll(cfg._parent, true) : {};
+    API.copy(all, cfg);
+    if (!inheriting) {
+        API.copy(all, cfg._private);
+    }
+    return all;
+};
+
+API.copy = function(to, from) {
+    for (var name in from) {
+        if (name.charAt(0) !== '_') {
+            if (name.charAt(0) === '!') {
+                to[name.substring(1)] = from[name];
+            } else {
+                to[name] = API.combine(to[name], from[name]);
+            }
+        }
+    }
+};
+
+API.get = function(cfg, name, inheriting) {
+    var priv = cfg._private,
+        iname = '!'+name;
+    if (!inheriting && iname in priv) {
+        return priv[iname];
+    }
+    if (iname in cfg) {
+        return cfg[iname];
+    }
+    var value = inheriting ? cfg[name] :
+                API.combine(cfg[name], priv[name]);
+    if (cfg._parent) {
+        return API.combine(API.get(cfg._parent, name, true), value);
+    }
+    return value;
+};
+
+API.set = function(cfg, name, value) {
+    var api = cfg._fn;
+    // always bind functions to the cfg
+    if (typeof value === "function") {
+        value = value.bind(cfg);
+    }
+    if (name.charAt(0) === '.') {
+        api[name.substring(1)] = value;
+    } else if (name.charAt(0) === '@') {
+        api[name.substring(1)] = API.build(value, cfg);
+    } else if (name.charAt(0) === '_') {
+        cfg._private[name.substring(1)] = value;
+    } else {
+        cfg[name] = value;
+    }
+};
+
+API.combine = function(pval, val) {
+    var ptype = API.type(pval),
+        type = API.type(val);
+    return (
+        // ignore null/undefined operands
+        !type ? pval :
+        !ptype ? val :
+        // mismatched types
+        type !== ptype ?
+            ptype === 'function' ? pval(val) :
+            type === 'function' ? val(pval) :
+            ptype === 'array' ? pval.concat(val) :
+            type === 'array' ? [].concat.apply([pval], val) :
+                pval + val :
+        // matched types
+        type === 'function' ? API.combineFn(pval, val) :
+        type === 'object' ? API.combineObject(pval, val) :
+        type === 'array' ? pval.concat.apply(pval, val) :
+        type === 'boolean' ? (pval && val) :
+            pval + val
+    );
+};
+
+API.combineFn = function(pfn, fn) {
+    return function combined(res) {
+        pfn(res);
+        fn(res);
+        return res;
+    };
+};
+
+API.combineObject = function(pobj, obj) {
+    var combo = {};
+    for (var name in pobj) {
+        combo[name] = pobj[name];
+    }
+    for (name in obj) {
+        combo[name] = obj[name];
+    }
+    return combo;
+};
+
+API.type = function(val) {
+    var type = typeof val;
+    return type === 'object' ?
+        Array.isArray(val) ? 'array' :
+            !val ? null : type :
+        type === 'undefined' ? null : type;
+};
+
+JCX.version = "";
 
 })(document, window.store || function(){});
