@@ -1,4 +1,4 @@
-/*! jcx - v0.1.0 - 2014-09-07
+/*! jcx - v0.1.1 - 2014-09-08
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -69,7 +69,7 @@ XHR.promise = function(xhr, cfg) {
     return new Promise(function(resolve, reject) {
         xhr.onload = function() {
             try {
-                XHR.json(xhr);
+                XHR.parse(xhr);
                 XHR.headers(xhr);
                 var status = xhr.status || 200;// file: reports 0, treat as 200
                 (status >= 200 && status < 400 ? resolve : reject)(xhr);
@@ -95,9 +95,9 @@ XHR.promise = function(xhr, cfg) {
     .catch(cfg.retry ? XHR.retry : null);
 };
 
-XHR.json = function(xhr) {
+XHR.parse = function(xhr) {
     try {
-        xhr.responseJson = JSON.parse(xhr.responseText);
+        xhr.value = JSON.parse(xhr.responseText);
     } catch (e) {}
 };
 
@@ -117,7 +117,6 @@ XHR.headers = function(xhr) {
 
 XHR.active = 0;
 XHR.end = function(xhr) {
-    window.console.log('end', this, xhr);
     XHR.active--;
     var handler = xhr.cfg[xhr.status] || global[xhr.status];
     return handler && handler(xhr) || xhr;
