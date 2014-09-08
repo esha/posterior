@@ -1,40 +1,32 @@
-var XHR = JCX.xhr = function(options) {
-    var xhr = new XMLHttpRequest(),
-        method = XHR.methodMap[options.method] || options.method;
-    xhr.options = options;
-    xhr.open(method, options.url, options.async, options.username, options.password);
-    if (options.xhrFields) {
-        for (var field in options.xhrFields) {
-            xhr[field] = options.xhrFields[field];
+var XHR = JCX.xhr = function() {
+    return XHR.main.apply(this, arguments);
+},
+global = XHR.global = {};
+
+XHR.main = function(cfg) {
+    var xhr, 
+        promise;
+
+    if (cfg.cache) {
+        xhr = store(XHR.key(cfg));
+        if (xhr) {
+            promise = Promise.resolve(xhr);
         }
     }
-    if (options.mimeType) {
-        xhr.overrideMimeType(options.mimeType);
-    }
-    if (options.headers) {
-        for (var header in options.headers) {
-            xhr.setRequestHeader(header, options.headers[header]);
+    if (!promise) {
+        xhr = XHR.create(cfg);
+        promise = XHR.promise(xhr, cfg);
+        if (cfg.cache) {
+            promise = promise.then(XHR.cache);
         }
     }
 
-    var promise = new Promise(function(resolve, reject) {
-        xhr.onload = function() {
-            XHR.json(xhr);
-            XHR.headers(xhr);
-            var status = xhr.status || 200;// file: reports 0, treat as 200
-            (status >= 200 && status < 400 ? resolve : reject)(xhr);
-        };
-        xhr.onerror = function() {
-            reject(xhr);
-        };
+    promise = promise.then(cfg.then, cfg.catch)
+        .then(cfg.always, cfg.always)
+        .then(global.then, global.catch)
+        .then(global.always, global.always);
 
-        XHR.active++;
-        xhr.send(options.data || null);
-    })
-    .then(XHR.end, XHR.end)
-    .then(options.success, options.error)
-    .then(XHR.success, XHR.error);
-
+    xhr.cfg = cfg;
     promise.xhr = xhr;
     return promise;
 };
@@ -43,7 +35,55 @@ XHR.methodMap = {
     PATCH: 'POST'
 };
 
-XHR.active = 0;
+XHR.create = function(cfg) {
+    var method = XHR.methodMap[cfg.method] || cfg.method,
+        xhr = new XMLHttpRequest();
+    xhr.open(method, cfg.url, cfg.async, cfg.username, cfg.password);
+    if (cfg.xhrFields) {
+        for (var field in cfg.xhrFields) {
+            xhr[field] = cfg.xhrFields[field];
+        }
+    }
+    if (cfg.mimeType) {
+        xhr.overrideMimeType(cfg.mimeType);
+    }
+    if (cfg.headers) {
+        for (var header in cfg.headers) {
+            xhr.setRequestHeader(header, cfg.headers[header]);
+        }
+    }
+    return xhr;
+};
+
+XHR.promise = function(xhr, cfg) {
+    return new Promise(function(resolve, reject) {
+        xhr.onload = function() {
+            try {
+                XHR.json(xhr);
+                XHR.headers(xhr);
+                var status = xhr.status || 200;// file: reports 0, treat as 200
+                (status >= 200 && status < 400 ? resolve : reject)(xhr);
+            } catch (e) {
+                xhr.error = e;
+                reject(xhr);
+            }
+        };
+        xhr.onerror = function() {
+            //TODO: set error?
+            reject(xhr);
+        };
+
+        XHR.active++;
+        try {
+            xhr.send(cfg.data ? JSON.stringify(cfg.data) : null);
+        } catch (e) {
+            xhr.error = e;
+            reject(xhr);
+        }
+    })
+    .then(XHR.end, XHR.end)
+    .catch(cfg.retry ? XHR.retry : null);
+};
 
 XHR.json = function(xhr) {
     try {
@@ -65,8 +105,45 @@ XHR.headers = function(xhr) {
     return xhr.responseHeaders = headers;
 };
 
+XHR.active = 0;
 XHR.end = function(xhr) {
+    window.console.log('end', this, xhr);
     XHR.active--;
-    var handler = xhr.options[xhr.status] || XHR[xhr.status];
+    var handler = xhr.cfg[xhr.status] || global[xhr.status];
     return handler && handler(xhr) || xhr;
+};
+
+XHR.key = function(cfg) {
+    return cfg.url + '|' +
+        (cfg.method || 'GET') + '|' +
+        (cfg.data ? JSON.stringify(cfg.data) : '');
+};
+XHR.cache = function(xhr) {
+    var cfg = xhr.cfg;
+    store(XHR.key(cfg), XHR.safeCopy(xhr), cfg.cache);
+};
+XHR.safeCopy = function(object) {
+    var copy = {};
+    for (var name in object) {
+        var value = object[name],
+            type = typeof value;
+        if (value && type !== 'function') {
+            copy[name] = type === 'object' ? XHR.safeCopy(value) : value;
+        }
+    }
+    return copy;
+};
+
+XHR.retry = function(xhr) {
+    var retry = xhr.cfg.retry || global.retry;
+    if (retry) {
+        var cfg = xhr.cfg;
+        return new Promise(function(resolve) {
+            setTimeout(function() {
+                cfg.retry = retry * 2;
+                resolve(XHR(cfg));
+            }, retry);
+        });
+    }
+    return xhr;
 };

@@ -21,7 +21,7 @@ module.exports = function(grunt) {
       },
       dist: {
         src: ['src/xhr.js',
-              'src/conf.js'],
+              'src/api.js'],
         dest: 'dist/<%= pkg.name %>.js'
       },
     },
