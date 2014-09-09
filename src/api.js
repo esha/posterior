@@ -156,9 +156,14 @@ API.set = function(cfg, name, value) {
     if (typeof value === "function") {
         if (API.get(cfg, 'debug')) {
             value = function debug() {
-                var ret = value.apply(cfg, arguments);
-                window.console.debug(name, arguments, ret);
-                return ret;
+                try {
+                    var ret = value.apply(cfg, arguments);
+                    window.console.debug(name, arguments, ret);
+                    return ret;
+                } catch (e) {
+                    window.console.error(name, arguments, e);
+                    throw e;
+                }
             };
         } else {
             value = value.bind(cfg);
