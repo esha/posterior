@@ -1,4 +1,4 @@
-/*! jcx - v0.2.2 - 2014-09-09
+/*! jcx - v0.2.3 - 2014-09-09
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -10,8 +10,7 @@ var JCX = window.JCX = function(config, name) {
 };
 var XHR = JCX.xhr = function() {
     return XHR.main.apply(this, arguments);
-},
-global = XHR.global = {};
+};
 
 XHR.main = function(cfg) {
     var xhr, 
@@ -31,10 +30,9 @@ XHR.main = function(cfg) {
         }
     }
 
-    promise = promise.then(cfg.then, cfg.catch)
-        .then(cfg.always, cfg.always)
-        .then(global.then, global.catch)
-        .then(global.always, global.always);
+    promise = promise
+        .then(cfg.always, XHR.rethrow(cfg.always))
+        .then(cfg.then, cfg.catch);
 
     xhr.cfg = cfg;
     promise.xhr = xhr;
@@ -43,11 +41,6 @@ XHR.main = function(cfg) {
 
 XHR.create = function(cfg) {
     var xhr = new XMLHttpRequest();
-
-    if (typeof cfg.config === 'function') {
-        cfg.config(cfg);
-    }
-
     xhr.open(XHR.method(cfg),
              XHR.url(cfg),
              cfg.async, cfg.username, cfg.password);
@@ -111,19 +104,17 @@ XHR.promise = function(xhr, cfg) {
             reject(xhr);
         }
     })
-    .then(XHR.end, XHR.end)
-    .catch(cfg.retry ? XHR.retry : null);
+    .then(XHR.end, XHR.rethrow(XHR.end))
+    .catch(XHR.rethrow(XHR.retry));
 };
 
 XHR.data = function(cfg) {
     var data = cfg.data;
-    if (data !== undefined) {
-        if (cfg.serialize) {
-            cfg.serialize(data);
-        }
-        if (typeof data !== "string") {
-            data = JSON.stringify(data);
-        }
+    if (cfg.serialize) {
+        data = cfg.serialize(data);
+    }
+    if (data !== undefined && typeof data !== "string") {
+        data = JSON.stringify(data);
     }
     return data || '';
 };
@@ -151,7 +142,7 @@ XHR.headers = function(xhr) {
 XHR.active = 0;
 XHR.end = function(xhr) {
     XHR.active--;
-    var handler = xhr.cfg[xhr.status] || global[xhr.status];
+    var handler = xhr.cfg[xhr.status];
     return handler && handler(xhr) || xhr;
 };
 
@@ -174,8 +165,21 @@ XHR.safeCopy = function(object) {
     return copy;
 };
 
+XHR.rethrow = function(fn) {
+    if (fn) {
+        return function rethrow(xhr) {
+            var ret = fn(xhr);
+            return ret !== xhr && ret !== undefined ?
+                ret :
+                xhr.error || xhr.status >= 400 || xhr.status < 200 ?
+                    Promise.reject(xhr) :
+                    xhr;
+        };
+    }
+};
+
 XHR.retry = function(xhr) {
-    var retry = xhr.cfg.retry || global.retry;
+    var retry = xhr.cfg.retry;
     if (retry) {
         var cfg = xhr.cfg;
         return new Promise(function(resolve) {
@@ -227,7 +231,7 @@ API.build = function(config, parent, selfName) {
         fn = cfg._fn = API.debug(selfName||'JCX', fn);
     }
     for (var name in config) {
-        API.set(cfg, name, config[name], selfName+'.');
+        API.set(cfg, name, config[name], selfName);
     }
 
     fn.cfg = cfg;
@@ -240,6 +244,7 @@ API.build = function(config, parent, selfName) {
 
 API.main = function(fn, data) {
     var cfg = API.getAll(fn.cfg);
+    cfg.data = data;
     API.process(cfg, data);
     var deps = cfg.requires;
     if (deps) {
@@ -274,28 +279,30 @@ API.config = function(name, value) {
         API.getAll(this.cfg);
 };
 
-API.process = function(cfg, data) {
+API.process = function(cfg) {
+    if (cfg.preprocess) {
+        cfg.preprocess(cfg);
+    }
     for (var name in cfg) {
         var value = cfg[name];
         if (typeof value === 'string') {
-            value = cfg[name] = API.fill(value, cfg, data);
+            value = cfg[name] = API.fill(value, cfg, cfg.data);
         }
     }
-    cfg.data = data;
 };
 
 API.fill = function(string, cfg, data) {
     data = data || {};
     var key,
         str = string,
-        re = /\{(\w+)\}/g;
+        re = /\$\{([^}]+)\}/g;
     while ((key = re.exec(string))) {
         key = key[1];
         var val = data[key];
         if (val === null || val === undefined) {
             val = key in cfg ? cfg[key] : '';
         }
-        str = str.replace(new RegExp('\\{'+key+'}'), val);
+        str = str.replace(new RegExp('\\$\\{'+key+'}'), val);
         delete data[key];
     }
     return str;
@@ -339,13 +346,16 @@ API.get = function(cfg, name, inheriting) {
     return value;
 };
 
-API.set = function(cfg, name, value, prefix) {
+API.set = function(cfg, name, value, parentName) {
     var api = cfg._fn;
     // always bind functions to the cfg
     if (typeof value === "function") {
         value = value.bind(cfg);
         if (API.get(cfg, 'debug')) {
-            value = API.debug(prefix+name, value);
+            value = API.debug(
+                parentName+(name.charAt(0)==='.'?'':'.')+name,
+                value
+            );
         }
     }
     if (name.charAt(0) === '.') {
