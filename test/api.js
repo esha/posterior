@@ -179,7 +179,7 @@ Test assertions:
 
     test('API.process', function() {
         var cfg = {
-            url: '/foo/../{data}/{cfg}',
+            url: '/{data}/{cfg}',
             cfg: 'cfg'
         },
         data = {
@@ -187,6 +187,7 @@ Test assertions:
             value: true
         };
         API.process(cfg, data);
+        strictEqual(cfg.data, data);
         strictEqual(cfg.url, '/data/cfg');
         strictEqual(data.bar, undefined);
         strictEqual(data.value, true);

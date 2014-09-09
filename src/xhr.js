@@ -31,14 +31,16 @@ XHR.main = function(cfg) {
     return promise;
 };
 
-XHR.methodMap = {
-    PATCH: 'POST'
-};
-
 XHR.create = function(cfg) {
-    var method = XHR.methodMap[cfg.method] || cfg.method,
-        xhr = new XMLHttpRequest();
-    xhr.open(method, cfg.url, cfg.async, cfg.username, cfg.password);
+    var xhr = new XMLHttpRequest();
+
+    if (typeof cfg.config === 'function') {
+        cfg.config(cfg);
+    }
+
+    xhr.open(XHR.method(cfg),
+             XHR.url(cfg),
+             cfg.async, cfg.username, cfg.password);
     if (cfg.xhrFields) {
         for (var field in cfg.xhrFields) {
             xhr[field] = cfg.xhrFields[field];
@@ -55,10 +57,29 @@ XHR.create = function(cfg) {
     return xhr;
 };
 
+XHR.method = function(cfg) {
+    return XHR.methodMap[cfg.method] || cfg.method || 'GET';
+};
+
+XHR.methodMap = {
+    PATCH: 'POST'
+};
+
+XHR.url = function(cfg) {
+    var url = cfg.url;
+    while (url.indexOf('..') >= 0) {
+        url = url.replace(/[\/\?\&][^\/\.\?\&]+[\/\?\&]?\.\.([\/\?\&]?)/, '$1');
+    }
+    return url;
+};
+
 XHR.promise = function(xhr, cfg) {
     return new Promise(function(resolve, reject) {
+        XHR.active++;
+
         xhr.onload = function() {
             try {
+                //TODO: redefine these as getters
                 XHR.parse(xhr);
                 XHR.headers(xhr);
                 var status = xhr.status || 200;// file: reports 0, treat as 200
@@ -68,14 +89,13 @@ XHR.promise = function(xhr, cfg) {
                 reject(xhr);
             }
         };
-        xhr.onerror = function() {
-            //TODO: set error?
+        xhr.onerror = function(e) {
+            xhr.error = e;
             reject(xhr);
         };
 
-        XHR.active++;
         try {
-            xhr.send(typeof cfg.data !== "string" ? JSON.stringify(cfg.data) : null);
+            xhr.send(XHR.data(cfg));
         } catch (e) {
             xhr.error = e;
             reject(xhr);
@@ -83,6 +103,19 @@ XHR.promise = function(xhr, cfg) {
     })
     .then(XHR.end, XHR.end)
     .catch(cfg.retry ? XHR.retry : null);
+};
+
+XHR.data = function(cfg) {
+    var data = cfg.data;
+    if (data !== undefined) {
+        if (cfg.serialize) {
+            cfg.serialize(data);
+        }
+        if (typeof data !== "string") {
+            data = JSON.stringify(data);
+        }
+    }
+    return data || '';
 };
 
 XHR.parse = function(xhr) {
@@ -113,9 +146,7 @@ XHR.end = function(xhr) {
 };
 
 XHR.key = function(cfg) {
-    return cfg.url + '|' +
-        (cfg.method || 'GET') + '|' +
-        (cfg.data ? JSON.stringify(cfg.data) : '');
+    return XHR.url(cfg)+'|'+XHR.method(cfg)+'|'+XHR.data(cfg);
 };
 XHR.cache = function(xhr) {
     var cfg = xhr.cfg;

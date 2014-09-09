@@ -19,24 +19,30 @@ string/int concat means usual
 boolean concat means &&
 
 */
-var API = JCX.api = function() {
-    return API.build.apply(this, arguments);
+var API = JCX.api = function(config, name) {
+    return API.build(config, null, name);
 };
 
-API.build = function(config, parent) {
+API.build = function(config, parent, selfName) {
     var fn = function(data) {
         return API.main(fn, data);
-    };
-    fn.cfg = {
+    },
+    cfg = {
         _fn: fn,
         _parent: parent,
         _private: {}
     };
-    fn.config = API.config;
+
     for (var name in config) {
-        API.set(fn.cfg, name, config[name]);
+        API.set(cfg, name, config[name], selfName+'.');
     }
-    if (API.get(fn.cfg, 'auto')) {
+    if (API.get(cfg, 'debug')) {
+        fn = API.debug(selfName||'JCX', fn);
+    }
+
+    fn.cfg = cfg;
+    fn.config = API.config;
+    if (API.get(cfg, 'auto')) {
         setTimeout(fn, 0);
     }
     return fn;
@@ -84,15 +90,8 @@ API.process = function(cfg, data) {
         if (typeof value === 'string') {
             value = cfg[name] = API.fill(value, cfg, data);
         }
-        // special handling for URLs
-        if (name === 'url') {
-            while (value.indexOf('..') >= 0) {
-                value = value.replace(/[\/\?\&][^\/\.\?\&]+[\/\?\&]?\.\.([\/\?\&]?)/, '$1');
-            }
-            cfg.url = value;
-        }
     }
-    cfg.data = cfg.serialize ? cfg.serialize(data) : data;
+    cfg.data = data;
 };
 
 API.fill = function(string, cfg, data) {
@@ -150,34 +149,44 @@ API.get = function(cfg, name, inheriting) {
     return value;
 };
 
-API.set = function(cfg, name, value) {
+API.set = function(cfg, name, value, prefix) {
     var api = cfg._fn;
     // always bind functions to the cfg
     if (typeof value === "function") {
+        value = value.bind(cfg);
         if (API.get(cfg, 'debug')) {
-            value = function debug() {
-                try {
-                    var ret = value.apply(cfg, arguments);
-                    window.console.debug(name, arguments, ret);
-                    return ret;
-                } catch (e) {
-                    window.console.error(name, arguments, e);
-                    throw e;
-                }
-            };
-        } else {
-            value = value.bind(cfg);
+            value = API.debug(prefix+name, value);
         }
     }
     if (name.charAt(0) === '.') {
         api[name.substring(1)] = value;
     } else if (name.charAt(0) === '@') {
-        api[name.substring(1)] = API.build(value, cfg);
+        api[name.substring(1)] = API.build(value, cfg, name);
     } else if (name.charAt(0) === '_') {
         cfg._private[name.substring(1)] = value;
     } else {
         cfg[name] = value;
     }
+};
+
+API.debug = function(name, fn) {
+    var console = window.console,
+        concat = Array.prototype.concat;
+    return function debug(arg) {
+        try {
+            var ret = fn.apply(this, arguments),
+                args = concat.apply([name], arguments);
+            if (ret !== undefined && ret !== arg) {
+                args.push(ret);
+            }
+            console.debug.apply(console, args);
+            return ret;
+        } catch (e) {
+            var args = concat.apply([name, e], arguments);
+            console.error.apply(console, args);
+            throw e;
+        }
+    };
 };
 
 API.combine = function(pval, val) {
