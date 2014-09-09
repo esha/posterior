@@ -33,11 +33,11 @@ API.build = function(config, parent, selfName) {
         _private: {}
     };
 
+    if (config.debug || API.get(cfg, 'debug')) {
+        fn = API.debug(selfName||'JCX', fn);
+    }
     for (var name in config) {
         API.set(cfg, name, config[name], selfName+'.');
-    }
-    if (API.get(cfg, 'debug')) {
-        fn = API.debug(selfName||'JCX', fn);
     }
 
     fn.cfg = cfg;
