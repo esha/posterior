@@ -1,4 +1,4 @@
-/*! jcx - v0.2.1 - 2014-09-09
+/*! jcx - v0.2.2 - 2014-09-09
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -224,7 +224,7 @@ API.build = function(config, parent, selfName) {
     };
 
     if (config.debug || API.get(cfg, 'debug')) {
-        fn = API.debug(selfName||'JCX', fn);
+        fn = cfg._fn = API.debug(selfName||'JCX', fn);
     }
     for (var name in config) {
         API.set(cfg, name, config[name], selfName+'.');
