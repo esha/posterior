@@ -167,27 +167,27 @@ Test assertions:
 
     test('API.fill', function() {
         var data = {
-            a: 'b'
+            '@a': 'b'
         },
         cfg = {
             prop: 'val'
         };
-        equal('b val', API.fill('{a} {prop}', cfg, data));
-        equal(false, 'a' in data);
+        equal('b val', API.fill('${@a} ${prop}', cfg, data));
+        equal(false, '@a' in data);
         equal('val', cfg.prop);
     });
 
     test('API.process', function() {
         var cfg = {
-            url: '/{data}/{cfg}',
-            cfg: 'cfg'
-        },
-        data = {
-            data: 'data',
-            value: true
+            url: '/${data}/${cfg}',
+            cfg: 'cfg',
+            data: {
+                data: 'data',
+                value: true
+            }
         };
-        API.process(cfg, data);
-        strictEqual(cfg.data, data);
+        API.process(cfg);
+        var data = cfg.data;
         strictEqual(cfg.url, '/data/cfg');
         strictEqual(data.bar, undefined);
         strictEqual(data.value, true);

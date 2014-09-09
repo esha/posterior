@@ -37,7 +37,7 @@ API.build = function(config, parent, selfName) {
         fn = cfg._fn = API.debug(selfName||'JCX', fn);
     }
     for (var name in config) {
-        API.set(cfg, name, config[name], selfName+'.');
+        API.set(cfg, name, config[name], selfName);
     }
 
     fn.cfg = cfg;
@@ -50,6 +50,7 @@ API.build = function(config, parent, selfName) {
 
 API.main = function(fn, data) {
     var cfg = API.getAll(fn.cfg);
+    cfg.data = data;
     API.process(cfg, data);
     var deps = cfg.requires;
     if (deps) {
@@ -84,28 +85,30 @@ API.config = function(name, value) {
         API.getAll(this.cfg);
 };
 
-API.process = function(cfg, data) {
+API.process = function(cfg) {
+    if (cfg.preprocess) {
+        cfg.preprocess(cfg);
+    }
     for (var name in cfg) {
         var value = cfg[name];
         if (typeof value === 'string') {
-            value = cfg[name] = API.fill(value, cfg, data);
+            value = cfg[name] = API.fill(value, cfg, cfg.data);
         }
     }
-    cfg.data = data;
 };
 
 API.fill = function(string, cfg, data) {
     data = data || {};
     var key,
         str = string,
-        re = /\{(\w+)\}/g;
+        re = /\$\{([^}]+)\}/g;
     while ((key = re.exec(string))) {
         key = key[1];
         var val = data[key];
         if (val === null || val === undefined) {
             val = key in cfg ? cfg[key] : '';
         }
-        str = str.replace(new RegExp('\\{'+key+'}'), val);
+        str = str.replace(new RegExp('\\$\\{'+key+'}'), val);
         delete data[key];
     }
     return str;
@@ -149,13 +152,16 @@ API.get = function(cfg, name, inheriting) {
     return value;
 };
 
-API.set = function(cfg, name, value, prefix) {
+API.set = function(cfg, name, value, parentName) {
     var api = cfg._fn;
     // always bind functions to the cfg
     if (typeof value === "function") {
         value = value.bind(cfg);
         if (API.get(cfg, 'debug')) {
-            value = API.debug(prefix+name, value);
+            value = API.debug(
+                parentName+(name.charAt(0)==='.'?'':'.')+name,
+                value
+            );
         }
     }
     if (name.charAt(0) === '.') {

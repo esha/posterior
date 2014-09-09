@@ -1,7 +1,6 @@
 var XHR = JCX.xhr = function() {
     return XHR.main.apply(this, arguments);
-},
-global = XHR.global = {};
+};
 
 XHR.main = function(cfg) {
     var xhr, 
@@ -21,10 +20,9 @@ XHR.main = function(cfg) {
         }
     }
 
-    promise = promise.then(cfg.then, cfg.catch)
-        .then(cfg.always, cfg.always)
-        .then(global.then, global.catch)
-        .then(global.always, global.always);
+    promise = promise
+        .then(cfg.always, XHR.rethrow(cfg.always))
+        .then(cfg.then, cfg.catch);
 
     xhr.cfg = cfg;
     promise.xhr = xhr;
@@ -33,11 +31,6 @@ XHR.main = function(cfg) {
 
 XHR.create = function(cfg) {
     var xhr = new XMLHttpRequest();
-
-    if (typeof cfg.config === 'function') {
-        cfg.config(cfg);
-    }
-
     xhr.open(XHR.method(cfg),
              XHR.url(cfg),
              cfg.async, cfg.username, cfg.password);
@@ -101,19 +94,17 @@ XHR.promise = function(xhr, cfg) {
             reject(xhr);
         }
     })
-    .then(XHR.end, XHR.end)
-    .catch(cfg.retry ? XHR.retry : null);
+    .then(XHR.end, XHR.rethrow(XHR.end))
+    .catch(XHR.rethrow(XHR.retry));
 };
 
 XHR.data = function(cfg) {
     var data = cfg.data;
-    if (data !== undefined) {
-        if (cfg.serialize) {
-            cfg.serialize(data);
-        }
-        if (typeof data !== "string") {
-            data = JSON.stringify(data);
-        }
+    if (cfg.serialize) {
+        data = cfg.serialize(data);
+    }
+    if (data !== undefined && typeof data !== "string") {
+        data = JSON.stringify(data);
     }
     return data || '';
 };
@@ -141,7 +132,7 @@ XHR.headers = function(xhr) {
 XHR.active = 0;
 XHR.end = function(xhr) {
     XHR.active--;
-    var handler = xhr.cfg[xhr.status] || global[xhr.status];
+    var handler = xhr.cfg[xhr.status];
     return handler && handler(xhr) || xhr;
 };
 
@@ -164,8 +155,21 @@ XHR.safeCopy = function(object) {
     return copy;
 };
 
+XHR.rethrow = function(fn) {
+    if (fn) {
+        return function rethrow(xhr) {
+            var ret = fn(xhr);
+            return ret !== xhr && ret !== undefined ?
+                ret :
+                xhr.error || xhr.status >= 400 || xhr.status < 200 ?
+                    Promise.reject(xhr) :
+                    xhr;
+        };
+    }
+};
+
 XHR.retry = function(xhr) {
-    var retry = xhr.cfg.retry || global.retry;
+    var retry = xhr.cfg.retry;
     if (retry) {
         var cfg = xhr.cfg;
         return new Promise(function(resolve) {
