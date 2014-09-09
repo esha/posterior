@@ -92,6 +92,7 @@ API.process = function(cfg, data) {
             cfg.url = value;
         }
     }
+    cfg.data = cfg.serialize ? cfg.serialize(data) : data;
 };
 
 API.fill = function(string, cfg, data) {

@@ -75,7 +75,7 @@ XHR.promise = function(xhr, cfg) {
 
         XHR.active++;
         try {
-            xhr.send(cfg.data ? JSON.stringify(cfg.data) : null);
+            xhr.send(typeof cfg.data !== "string" ? JSON.stringify(cfg.data) : null);
         } catch (e) {
             xhr.error = e;
             reject(xhr);
