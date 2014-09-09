@@ -192,9 +192,8 @@ API.combine = function(pval, val) {
 
 API.combineFn = function(pfn, fn) {
     return function combined(res) {
-        pfn(res);
-        fn(res);
-        return res;
+        //TODO: reconsider whether falsey return values should be respected
+        return fn(pfn(res) || res) || res;
     };
 };
 
