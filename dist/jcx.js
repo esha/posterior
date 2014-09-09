@@ -1,12 +1,12 @@
-/*! jcx - v0.1.4 - 2014-09-08
+/*! jcx - v0.2.0 - 2014-09-08
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
 (function(store) {
     "use strict";
 
-var JCX = window.JCX = function(config) {
-    return JCX.api(config);
+var JCX = window.JCX = function(config, name) {
+    return JCX.api(config, name);
 };
 var XHR = JCX.xhr = function() {
     return XHR.main.apply(this, arguments);
@@ -41,14 +41,16 @@ XHR.main = function(cfg) {
     return promise;
 };
 
-XHR.methodMap = {
-    PATCH: 'POST'
-};
-
 XHR.create = function(cfg) {
-    var method = XHR.methodMap[cfg.method] || cfg.method,
-        xhr = new XMLHttpRequest();
-    xhr.open(method, cfg.url, cfg.async, cfg.username, cfg.password);
+    var xhr = new XMLHttpRequest();
+
+    if (typeof cfg.config === 'function') {
+        cfg.config(cfg);
+    }
+
+    xhr.open(XHR.method(cfg),
+             XHR.url(cfg),
+             cfg.async, cfg.username, cfg.password);
     if (cfg.xhrFields) {
         for (var field in cfg.xhrFields) {
             xhr[field] = cfg.xhrFields[field];
@@ -65,10 +67,29 @@ XHR.create = function(cfg) {
     return xhr;
 };
 
+XHR.method = function(cfg) {
+    return XHR.methodMap[cfg.method] || cfg.method || 'GET';
+};
+
+XHR.methodMap = {
+    PATCH: 'POST'
+};
+
+XHR.url = function(cfg) {
+    var url = cfg.url;
+    while (url.indexOf('..') >= 0) {
+        url = url.replace(/[\/\?\&][^\/\.\?\&]+[\/\?\&]?\.\.([\/\?\&]?)/, '$1');
+    }
+    return url;
+};
+
 XHR.promise = function(xhr, cfg) {
     return new Promise(function(resolve, reject) {
+        XHR.active++;
+
         xhr.onload = function() {
             try {
+                //TODO: redefine these as getters
                 XHR.parse(xhr);
                 XHR.headers(xhr);
                 var status = xhr.status || 200;// file: reports 0, treat as 200
@@ -78,14 +99,13 @@ XHR.promise = function(xhr, cfg) {
                 reject(xhr);
             }
         };
-        xhr.onerror = function() {
-            //TODO: set error?
+        xhr.onerror = function(e) {
+            xhr.error = e;
             reject(xhr);
         };
 
-        XHR.active++;
         try {
-            xhr.send(typeof cfg.data !== "string" ? JSON.stringify(cfg.data) : null);
+            xhr.send(XHR.data(cfg));
         } catch (e) {
             xhr.error = e;
             reject(xhr);
@@ -93,6 +113,19 @@ XHR.promise = function(xhr, cfg) {
     })
     .then(XHR.end, XHR.end)
     .catch(cfg.retry ? XHR.retry : null);
+};
+
+XHR.data = function(cfg) {
+    var data = cfg.data;
+    if (data !== undefined) {
+        if (cfg.serialize) {
+            cfg.serialize(data);
+        }
+        if (typeof data !== "string") {
+            data = JSON.stringify(data);
+        }
+    }
+    return data || '';
 };
 
 XHR.parse = function(xhr) {
@@ -123,9 +156,7 @@ XHR.end = function(xhr) {
 };
 
 XHR.key = function(cfg) {
-    return cfg.url + '|' +
-        (cfg.method || 'GET') + '|' +
-        (cfg.data ? JSON.stringify(cfg.data) : '');
+    return XHR.url(cfg)+'|'+XHR.method(cfg)+'|'+XHR.data(cfg);
 };
 XHR.cache = function(xhr) {
     var cfg = xhr.cfg;
@@ -178,24 +209,30 @@ string/int concat means usual
 boolean concat means &&
 
 */
-var API = JCX.api = function() {
-    return API.build.apply(this, arguments);
+var API = JCX.api = function(config, name) {
+    return API.build(config, null, name);
 };
 
-API.build = function(config, parent) {
+API.build = function(config, parent, selfName) {
     var fn = function(data) {
         return API.main(fn, data);
-    };
-    fn.cfg = {
+    },
+    cfg = {
         _fn: fn,
         _parent: parent,
         _private: {}
     };
-    fn.config = API.config;
+
     for (var name in config) {
-        API.set(fn.cfg, name, config[name]);
+        API.set(cfg, name, config[name], selfName+'.');
     }
-    if (API.get(fn.cfg, 'auto')) {
+    if (API.get(cfg, 'debug')) {
+        fn = API.debug(selfName||'JCX', fn);
+    }
+
+    fn.cfg = cfg;
+    fn.config = API.config;
+    if (API.get(cfg, 'auto')) {
         setTimeout(fn, 0);
     }
     return fn;
@@ -243,15 +280,8 @@ API.process = function(cfg, data) {
         if (typeof value === 'string') {
             value = cfg[name] = API.fill(value, cfg, data);
         }
-        // special handling for URLs
-        if (name === 'url') {
-            while (value.indexOf('..') >= 0) {
-                value = value.replace(/[\/\?\&][^\/\.\?\&]+[\/\?\&]?\.\.([\/\?\&]?)/, '$1');
-            }
-            cfg.url = value;
-        }
     }
-    cfg.data = cfg.serialize ? cfg.serialize(data) : data;
+    cfg.data = data;
 };
 
 API.fill = function(string, cfg, data) {
@@ -309,34 +339,44 @@ API.get = function(cfg, name, inheriting) {
     return value;
 };
 
-API.set = function(cfg, name, value) {
+API.set = function(cfg, name, value, prefix) {
     var api = cfg._fn;
     // always bind functions to the cfg
     if (typeof value === "function") {
+        value = value.bind(cfg);
         if (API.get(cfg, 'debug')) {
-            value = function debug() {
-                try {
-                    var ret = value.apply(cfg, arguments);
-                    window.console.debug(name, arguments, ret);
-                    return ret;
-                } catch (e) {
-                    window.console.error(name, arguments, e);
-                    throw e;
-                }
-            };
-        } else {
-            value = value.bind(cfg);
+            value = API.debug(prefix+name, value);
         }
     }
     if (name.charAt(0) === '.') {
         api[name.substring(1)] = value;
     } else if (name.charAt(0) === '@') {
-        api[name.substring(1)] = API.build(value, cfg);
+        api[name.substring(1)] = API.build(value, cfg, name);
     } else if (name.charAt(0) === '_') {
         cfg._private[name.substring(1)] = value;
     } else {
         cfg[name] = value;
     }
+};
+
+API.debug = function(name, fn) {
+    var console = window.console,
+        concat = Array.prototype.concat;
+    return function debug(arg) {
+        try {
+            var ret = fn.apply(this, arguments),
+                args = concat.apply([name], arguments);
+            if (ret !== undefined && ret !== arg) {
+                args.push(ret);
+            }
+            console.debug.apply(console, args);
+            return ret;
+        } catch (e) {
+            var args = concat.apply([name, e], arguments);
+            console.error.apply(console, args);
+            throw e;
+        }
+    };
 };
 
 API.combine = function(pval, val) {
