@@ -1,4 +1,4 @@
-/*! jcx - v0.1.1 - 2014-09-08
+/*! jcx - v0.1.2 - 2014-09-08
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -85,7 +85,7 @@ XHR.promise = function(xhr, cfg) {
 
         XHR.active++;
         try {
-            xhr.send(cfg.data ? JSON.stringify(cfg.data) : null);
+            xhr.send(typeof cfg.data !== "string" ? JSON.stringify(cfg.data) : null);
         } catch (e) {
             xhr.error = e;
             reject(xhr);
@@ -251,6 +251,7 @@ API.process = function(cfg, data) {
             cfg.url = value;
         }
     }
+    cfg.data = cfg.serialize ? cfg.serialize(data) : data;
 };
 
 API.fill = function(string, cfg, data) {
@@ -350,9 +351,8 @@ API.combine = function(pval, val) {
 
 API.combineFn = function(pfn, fn) {
     return function combined(res) {
-        pfn(res);
-        fn(res);
-        return res;
+        //TODO: reconsider whether falsey return values should be respected
+        return fn(pfn(res) || res) || res;
     };
 };
 
