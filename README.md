@@ -14,6 +14,6 @@ Download: [jcx.min.js][full-min] or [jcx.js][full] [![Build Status](https://trav
 [component]: http://component.io/
 
 ### Release History
-* 2014-09-08 [v0.1.1][] (initial)
+* 2014-09-08 [v0.1.3][] (initial)
 
-[v0.1.2]: https://github.com/esha/jcx/tree/0.1.2
+[v0.1.3]: https://github.com/esha/jcx/tree/0.1.3

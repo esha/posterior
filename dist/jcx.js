@@ -1,4 +1,4 @@
-/*! jcx - v0.1.2 - 2014-09-08
+/*! jcx - v0.1.3 - 2014-09-08
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -313,7 +313,15 @@ API.set = function(cfg, name, value) {
     var api = cfg._fn;
     // always bind functions to the cfg
     if (typeof value === "function") {
-        value = value.bind(cfg);
+        if (API.get(cfg, 'debug')) {
+            value = function debug() {
+                var ret = value.apply(cfg, arguments);
+                window.console.debug(name, arguments, ret);
+                return ret;
+            };
+        } else {
+            value = value.bind(cfg);
+        }
     }
     if (name.charAt(0) === '.') {
         api[name.substring(1)] = value;
