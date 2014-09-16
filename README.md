@@ -16,6 +16,8 @@ Download: [jcx.min.js][full-min] or [jcx.js][full] [![Build Status](https://trav
 ### Release History
 * 2014-09-08 [v0.1.4][] (initial)
 * 2014-09-09 [v0.2.3][] (debug mode, preprocess, no global)
+* 2014-09-16 [v0.3.0][] (timeout->error, async fix, direct XHR cfg, status mapping)
 
 [v0.1.4]: https://github.com/esha/jcx/tree/0.1.4
 [v0.2.3]: https://github.com/esha/jcx/tree/0.2.3
+[v0.3.0]: https://github.com/esha/jcx/tree/0.3.0

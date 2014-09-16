@@ -1,4 +1,4 @@
-/*! jcx - v0.2.3 - 2014-09-09
+/*! jcx - v0.3.0 - 2014-09-16
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -43,10 +43,11 @@ XHR.create = function(cfg) {
     var xhr = new XMLHttpRequest();
     xhr.open(XHR.method(cfg),
              XHR.url(cfg),
-             cfg.async, cfg.username, cfg.password);
-    if (cfg.xhrFields) {
-        for (var field in cfg.xhrFields) {
-            xhr[field] = cfg.xhrFields[field];
+             'async' in cfg ? cfg.async : true,
+             cfg.username, cfg.password);
+    for (var prop in cfg) {
+        if (prop in xhr) {
+            xhr[prop] = cfg[prop];
         }
     }
     if (cfg.mimeType) {
@@ -85,7 +86,8 @@ XHR.promise = function(xhr, cfg) {
                 //TODO: redefine these as getters
                 XHR.parse(xhr);
                 XHR.headers(xhr);
-                var status = xhr.status || 200;// file: reports 0, treat as 200
+                // allow cfg to re-map status codes (e.g. {0: 200} for file://)
+                var status = cfg.status ? cfg.status[xhr.status] : xhr.status;
                 (status >= 200 && status < 400 ? resolve : reject)(xhr);
             } catch (e) {
                 xhr.error = e;
@@ -96,6 +98,12 @@ XHR.promise = function(xhr, cfg) {
             xhr.error = e;
             reject(xhr);
         };
+        if (xhr.timeout) {
+            xhr.ontimeout = function() {
+                xhr.error = new Error('timeout');
+                reject(xhr);
+            };
+        }
 
         try {
             xhr.send(XHR.data(cfg));
