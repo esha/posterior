@@ -2,7 +2,7 @@
   "name": "jcx",
   "title": "JCX",
   "description": "Hierarchical configuration of JSON XHR communication for your APIs",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "homepage": "http://esha.github.io/jcx/",
   "author": {
     "name": "ESHA Research",

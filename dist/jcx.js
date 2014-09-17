@@ -1,4 +1,4 @@
-/*! jcx - v0.3.0 - 2014-09-16
+/*! jcx - v0.3.1 - 2014-09-16
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -53,6 +53,7 @@ XHR.create = function(cfg) {
     if (cfg.mimeType) {
         xhr.overrideMimeType(cfg.mimeType);
     }
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     if (cfg.headers) {
         for (var header in cfg.headers) {
             xhr.setRequestHeader(header, cfg.headers[header]);
@@ -83,9 +84,6 @@ XHR.promise = function(xhr, cfg) {
 
         xhr.onload = function() {
             try {
-                //TODO: redefine these as getters
-                XHR.parse(xhr);
-                XHR.headers(xhr);
                 // allow cfg to re-map status codes (e.g. {0: 200} for file://)
                 var status = cfg.status ? cfg.status[xhr.status] : xhr.status;
                 (status >= 200 && status < 400 ? resolve : reject)(xhr);
@@ -127,25 +125,38 @@ XHR.data = function(cfg) {
     return data || '';
 };
 
-XHR.parse = function(xhr) {
-    try {
-        xhr.value = JSON.parse(xhr.responseText);
-    } catch (e) {}
-};
-
-XHR.headers = function(xhr) {
-    var headers = {},
-        all = xhr.getAllResponseHeaders().trim().split('\n');
-    for (var i=0,m=all.length, header; i<m; i++) {
-        if ((header = all[i])) {
-            var parts = header.match(/^([\w\-]+):(.*)/);
-            if (parts.length === 3) {
-                headers[parts[1]] = parts[2].trim();
-            }
+Object.defineProperties(
+    XMLHttpRequest.prototype,
+    {
+        responseValue: {
+            get: function() {
+                if (this.responseText) {
+                    var object = JSON.parse(this.responseText);
+                    Object.defineProperty(this, 'responseValue', {value:object});
+                    return object;
+                }
+            },
+            configurable: true
+        },
+        responseHeaders: {
+            get: function() {
+                var headers = {},
+                    all = this.getAllResponseHeaders().trim().split('\n');
+                for (var i=0,m=all.length, header; i<m; i++) {
+                    if ((header = all[i])) {
+                        var parts = header.match(/^([\w\-]+):(.*)/);
+                        if (parts.length === 3) {
+                            headers[parts[1]] = parts[2].trim();
+                        }
+                    }
+                }
+                Object.defineProperty(this, 'responseHeaders', {value:headers});
+                return headers;
+            },
+            configurable: true
         }
     }
-    return xhr.responseHeaders = headers;
-};
+);
 
 XHR.active = 0;
 XHR.end = function(xhr) {
