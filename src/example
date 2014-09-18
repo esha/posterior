@@ -1,0 +1,349 @@
+/*
+'conf': 'standard config'
+'_private': 'this config not inherited'
+'+conf': 'concat w/ancestor'
+
+'.util': 'API prop/fn'
+'@sub': { 'sub API': 'to build' }
+
+requires: [testFn, 'name.of.api']
+auto: true//'call async upon build'
+
+_self, parent, name are reserved
+
+string values are processed at call-time against data/conf/window
+function-function concat results in promise fn wrapper
+function-* concat becomes result of calling fn w/* as arg
+object concat means copy/merge
+string/int concat means usual
+boolean concat means &&
+
+*/
+window.services = JCX({
+    url: window.location.pathname+'proxy',
+    //debug: true,
+    options: function(type, url, data) {
+        if (this.debug) console.log('services.options', type, url, data);
+        var opts = {
+            contentType: 'application/json; charset=utf-8'
+        };
+        if (type && type.charAt(0) === 'P') {
+            opts.data = JSON.stringify(data),
+            opts.processData = false;
+        }
+        return opts;
+    },
+    then: function(o) {
+        if (typeof o === "object" && !o._cleaned) {
+            o._cleaned = true;
+            if ('items' in o) {
+                o.items.forEach(_.cleanItem);
+            } else if ('id' in o) {
+                _.cleanItem(o);
+            }
+        }
+        return o;
+    },
+    done: function(data, status, xhr, options) {
+        if (xhr) {
+            this.sessionCheck(xhr);
+            var headers = ajaxAPI._.headers(xhr);
+            if (xhr.status === 201 && headers.Location) {
+                // pull new entity id from the location header
+                if (this.debug) console.log('services.done', xhr, headers.Location);
+                var location = headers.Location,
+                    slash = location.lastIndexOf('/');
+                if (slash > 0) {
+                    xhr.id = location.substring(slash+1);
+                }
+            }
+        }
+    },
+    fail: function(xhr, status, options) {
+        this.sessionCheck(xhr);
+        if (status === 'parsererror') {
+            if (xhr.responseText.trim().charAt(0) === '<') {
+                // looks like a login redirect
+                window.location += '';
+            }
+        } else {
+            console.log('services.fail', arguments);
+        }
+    },
+    sessionCheck: function(xhr) {
+        var contentType = xhr.getResponseHeader('Content-Type');
+        // redirects or non-40x HTML currently indicate login redirect (for now)
+        if (xhr.status === 0 || xhr.status === 302 ||
+            (xhr.status < 400 && contentType && contentType.indexOf('html') > 0)) {
+            window.location += '';// force reload/login
+        }
+    },
+    tracker: {
+        url: '/tracker/api',
+        init: {
+            url: '/journals/',
+            retry: 1000,
+            cache: true,
+            done: function(list) {
+                this.parent.journal.id = _.cleanId(list.items[0]);
+            }
+        },
+        journal: {
+            url: '/journals/{journalId}/entries',
+            requires: 'tracker.init',
+            '@format': function(date) {
+                return '20'+date.substring(6)+'-'+date.substring(0,2)+'-'+date.substring(3,5);
+            },
+            data: function() {
+                return {
+                    journalId: this.id,
+                    date: this.format(dayPicker.day())
+                };
+            },
+            profile: {
+                url: '?type=MetricsEntry&asOf={date}&limit=1',// get one
+                then: function(result) {
+                    if (result.totalItems) {
+                        return tracker.entry(result.items.pop().id).then(function(profile) {
+                            profile.activity = profile.activityLevel;
+                            return profile;
+                        });
+                    }
+                }
+            },//profile
+            entries: {
+                _url: '?type={type}&date={date}',
+                _requires: 'eshadata.units',
+                _data: function(type) {
+                    return { type: _.entryType(type) };
+                },
+                add: {
+                    type: 'POST',
+                    data: function(entry) {
+                        // make sure nothing inappropriate from a copied entry tags along
+                        delete entry.version;
+                        delete entry.id;
+                        delete entry.dateOccurred;
+                        return _.toEntry(entry);
+                    }
+                }
+            },
+            recent: {
+                url: '?type={type}&limit={1}',
+                requires: 'eshadata.units',
+                data: function(type) {
+                    return { type: _.entryType(type) };
+                },
+                options: function(){ return {data:null}; },//don't want $.ajax adding data to url
+                then: function(result) {
+                    result.items.forEach(_.fromItem);
+                    return result;
+                }
+            },
+            date: {
+                url: '../dates/{date}',
+                data: function(date) {
+                    return date ? { date: this.parent.format(date) } : {};
+                },
+                list: {
+                    url: '..'
+                }
+            }
+        },//journal
+        entry: {
+            url: '/entries/{0}',
+            _then: function(entry){ return _.fromItem(entry); },
+            edit: {
+                url: '../{id}',
+                type: 'POST',
+                data: function(entry) {
+                    if (!entry.version) {
+                        entry.version = 1;
+                    }
+                    return _.toEntry(entry, true);
+                }
+            },
+            remove: { type: 'DELETE' }
+        },//entry
+        food: {
+            url: '/foods/{0}',
+            _then: function(food) {
+                var arr = food.nutritionData,
+                    obj = {};
+                for (var i=0, m=arr.length; i<m; i++) {
+                    var data = arr[i];
+                    obj[data.nutrient] = data;
+                    if (data.value == 0) {
+                        delete data.value;
+                        delete data.nutrient;
+                    }
+                }
+                food.nutritionData = obj;
+                return food;
+            },
+            edit: {
+                url: '../{id}',
+                type: 'POST',
+                data: function(food){ return tracker.food.server(food); }
+            },
+            remove: { type: 'DELETE' },
+            list: {
+                requires: 'eshadata.units',
+                url: '..'
+            },
+            add: {
+                url: '..',
+                type: 'POST',
+                data: function(food) {
+                    delete food.id;
+                    return tracker.food.server(food);
+                }
+            },
+            '@server': function(food) {
+                food.timeUsuallyConsumed = food.timeUsuallyConsumed.value;
+                var obj = food.nutritionData,
+                    arr = [];
+                for (var key in obj) {
+                    var data = obj[key];
+                    data.nutrient = key;
+                    if (!data.value) data.value = 0;
+                    arr.push(data);
+                }
+                food.nutritionData = arr;
+                return food;
+            }
+        },//foods
+        favorite: {
+            url: '/favorites/{0}',
+            _then: function(favorite){ return _.fromItem(favorite); },
+            list: {
+                url: '..',
+                requires: 'eshadata.units',
+                then: function(result) {
+                    result.items.forEach(_.fromItem);
+                    return result;
+                }
+            },
+            add: {
+                type: 'POST',
+                url: '..',
+                data: function(favorite) {
+                    var type = favorite.type;
+                    if (!favorite[type]) {
+                        favorite[type] = favorite.reference;
+                    }
+                    if (!favorite.duration) {
+                        _.composeAmount(favorite);
+                    }
+                    favorite.type = 'Favorite'+type.charAt(0).toUpperCase()+type.substring(1);
+                    return favorite;
+                }
+            },
+            remove: { type: 'DELETE' }
+        }// favorites
+    },//tracker
+    eshadata: {
+        url: '/esha-data/api',
+        activity: {
+            url: '/activities/{0}',
+            requires: 'eshadata.units',
+            _then: function(activity) {
+                activity.supportedUnits = _.supportedTimes;
+                return activity;
+            },
+            find: {
+                url: '..?query={0}',
+                then: function(result) {
+                    var quantity = result.query.quantity,
+                        unit = _.resolveUnit(quantity.unit);
+                    if (unit.abbr === 'ea') {//HACK! TODO: fix backend, to avoid 'each' as default for activities
+                        unit = _.units.Minute;
+                        quantity.amount = "30";
+                    }
+                    quantity.unit = unit;
+                    result.items.forEach(function(item) {
+                        item.supportedUnits = _.supportedTimes;
+                    });
+                    return result;
+                }
+            }
+        },//activities
+        food: {
+            url: '/foods/{0}',
+            requires: 'eshadata.units',
+            _then: function(food) {
+                for (var i=0,m=food.supportedUnits.length; i<m; i++) {
+                    food.supportedUnits[i] = _.clean(food.supportedUnits[i]);
+                }
+                food.type = food.type.toLowerCase();
+                return food;
+            },
+            find: {
+                _url: '..?query={0}',
+                then: function(result) {
+                    var quantity = result.query.quantity;
+                    quantity.unit = _.resolveUnit(quantity.unit);
+                    if (result.nextPage) {
+                        result.next = $.ajax.api({
+                            url: result.nextPage.substring(1)
+                        }, this, 'next');
+                    }
+                    if (result.previousPage) {
+                        result.prev = $.ajax.api({
+                            url: result.previousPage.substring(1)
+                        }, this, 'next');
+                    }
+                    if (result.items && result.items.length) {
+                        return eshadata.food(result.items[0].id).then(function(food) {
+                            result.items[0] = food;
+                            return result;
+                        });
+                    } else {
+                        return result;
+                    }
+                }
+            }
+        },//foods
+        units: {
+            url: '/units?limit=200',
+            cache: 60*24*7,// need 'auto' support where it checks response header
+            _done: function(result) {
+                if (!('finished' in result)) {
+                    var items = result.items;
+                    items.push.apply(items, _.times);
+                    items.forEach(_.finishUnit);
+                    result.totalItems = items.length;
+                    result.finished = true;
+                    store(this._cacheKey, result);//override what's there
+                }
+            }
+        },//units
+        nutrients: {
+            url: '/nutrients?limit=100',
+            auto: true,
+            done: function(result) {
+                result.items.forEach(function(nutrient) {
+                    _.nutrients[nutrient.id] = nutrient;
+                });
+            }
+        },//nutrients
+        '@find': function(result, query) {
+            query = query.split(',');
+            var found = [];
+            for (var i=0,m=result.items.length; i<m; i++) {
+                var item = result.items[i];
+                for (var key in item) {
+                    if (item.hasOwnProperty(key)) {
+                        var index = query.indexOf(item[key]);
+                        if (index >= 0 && found[index] === undefined) {
+                            found[index] = item;
+                            break;
+                        }
+                    }
+                }
+            }
+            return query.length === 1 ? found[0] : found;
+        }
+    }//eshadata
+}//services
+;

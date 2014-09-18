@@ -1,5 +1,5 @@
 <%= banner %>
-(function(store) {
+(function(D, store) {
     "use strict";
 
 var JCX = window.JCX = function(config, name) {
