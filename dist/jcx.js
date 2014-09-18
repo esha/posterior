@@ -1,8 +1,8 @@
-/*! jcx - v0.3.1 - 2014-09-16
+/*! jcx - v0.4.0 - 2014-09-17
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
-(function(store) {
+(function(D, store) {
     "use strict";
 
 var JCX = window.JCX = function(config, name) {
@@ -10,7 +10,8 @@ var JCX = window.JCX = function(config, name) {
 };
 var XHR = JCX.xhr = function() {
     return XHR.main.apply(this, arguments);
-};
+},
+htmlClass = D.documentElement.classList;
 
 XHR.main = function(cfg) {
     var xhr, 
@@ -80,34 +81,29 @@ XHR.url = function(cfg) {
 
 XHR.promise = function(xhr, cfg) {
     return new Promise(function(resolve, reject) {
-        XHR.active++;
+        XHR.start();
 
+        var error = xhr.onerror = function(e) {
+            xhr.error = e;
+            reject(xhr);
+        };
         xhr.onload = function() {
             try {
                 // allow cfg to re-map status codes (e.g. {0: 200} for file://)
                 var status = cfg.status ? cfg.status[xhr.status] : xhr.status;
                 (status >= 200 && status < 400 ? resolve : reject)(xhr);
             } catch (e) {
-                xhr.error = e;
-                reject(xhr);
+                error(e);
             }
         };
-        xhr.onerror = function(e) {
-            xhr.error = e;
-            reject(xhr);
-        };
         if (xhr.timeout) {
-            xhr.ontimeout = function() {
-                xhr.error = new Error('timeout');
-                reject(xhr);
-            };
+            xhr.ontimeout = error;
         }
 
         try {
             xhr.send(XHR.data(cfg));
         } catch (e) {
-            xhr.error = e;
-            reject(xhr);
+            error(e);
         }
     })
     .then(XHR.end, XHR.rethrow(XHR.end))
@@ -159,8 +155,15 @@ Object.defineProperties(
 );
 
 XHR.active = 0;
+XHR.start = function() {
+    XHR.active++;
+    htmlClass.add('jcx-loading');
+};
 XHR.end = function(xhr) {
     XHR.active--;
+    if (!XHR.active) {
+        htmlClass.remove('jcx-loading');
+    }
     var handler = xhr.cfg[xhr.status];
     return handler && handler(xhr) || xhr;
 };
@@ -199,13 +202,16 @@ XHR.rethrow = function(fn) {
 
 XHR.retry = function(xhr) {
     var retry = xhr.cfg.retry;
-    if (retry) {
-        var cfg = xhr.cfg;
+    if (retry && (retry.limit || 3) > retry.count) {
+        if (typeof retry === 'number') {
+            retry = { wait: retry };
+        }
         return new Promise(function(resolve) {
             setTimeout(function() {
-                cfg.retry = retry * 2;
-                resolve(XHR(cfg));
-            }, retry);
+                retry.count = (retry.count || 0) + 1;
+                retry.wait = (retry.wait || 1000) * 2;
+                resolve(XHR(xhr.cfg));
+            }, retry.wait || 1000);
         });
     }
     return xhr;
