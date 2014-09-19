@@ -141,10 +141,11 @@ XHR.properties = {
             try {
                 if (this.responseText) {
                     response = JSON.parse(this.responseText);
-                } else if (typeof this.response === 'object') {
-                    response = this.response;
                 }
             } catch (e) {}
+            if (response === null && typeof this.response === 'object') {
+                response = this.response;
+            }
             Object.defineProperty(this, 'responseObject', {value:response});
             return response;
         },
