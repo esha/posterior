@@ -2,7 +2,7 @@
     "name": "jcx",
     "repo": "esha/jcx",
     "description": "Hierarchical configuration of JSON XHR communication for your APIs",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "keywords": [
         "JSON",
         "AJAX",
