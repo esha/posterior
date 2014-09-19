@@ -1,4 +1,4 @@
-/*! jcx - v0.5.1 - 2014-09-19
+/*! jcx - v0.5.2 - 2014-09-19
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -151,6 +151,8 @@ XHR.properties = {
             try {
                 if (this.responseText) {
                     response = JSON.parse(this.responseText);
+                } else if (typeof response === 'object') {
+                    response = this.response;
                 }
             } catch (e) {}
             Object.defineProperty(this, 'responseObject', {value:response});
