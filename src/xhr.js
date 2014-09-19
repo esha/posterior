@@ -141,7 +141,7 @@ XHR.properties = {
             try {
                 if (this.responseText) {
                     response = JSON.parse(this.responseText);
-                } else if (typeof response === 'object') {
+                } else if (typeof this.response === 'object') {
                     response = this.response;
                 }
             } catch (e) {}
