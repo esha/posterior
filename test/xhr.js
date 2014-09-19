@@ -24,6 +24,7 @@ Test assertions:
 
     test("API exists", function() {
         ok(XHR);
+        ok('responseObject' in XMLHttpRequest.prototype);
         ok('responseHeaders' in XMLHttpRequest.prototype);
     });
 
@@ -60,7 +61,7 @@ Test assertions:
             break;
             default:
                 this.status = 200;
-                this.responseText = data;
+                this.responseText = this.cfg.response || data;
                 this.onload();
             break;
         }
@@ -68,7 +69,31 @@ Test assertions:
             this.onloadend();
         }
     };
+    Object.defineProperties(FakeXHR.prototype, XHR.properties);
 
+    test('XHR.main', function() {
+        expect(5);
+        XHR.ctor = FakeXHR;
+        var promise = XHR({
+            url: '/main',
+            response: '{"json":true}',
+            always: function(xhr) {
+                start();
+                equal(xhr._url, '/main');
+                equal(xhr._method, 'GET');
+                stop();
+                return xhr;
+            }
+        });
+        ok(promise.xhr instanceof FakeXHR, 'promise.xhr should be fake');
+        stop();
+        promise.then(function(xhr) {
+            start();
+            ok(xhr instanceof FakeXHR, 'argument should be FakeXHR');
+            ok(xhr.responseObject.json, 'should get json response');
+        });
+        delete XHR.ctor;
+    });
 
     test('XHR.config', function() {
         var xhr = new FakeXHR(),
@@ -110,6 +135,7 @@ Test assertions:
         XHR.config(xhr, cfg);
         strictEqual(xhr._async, false);
         equal(xhr._method, 'POST');
+        equal(xhr._headers['X-Requested-With'], 'XMLHttpRequest');
         strictEqual(xhr._headers.Accept, undefined);
     });
 
@@ -118,13 +144,15 @@ Test assertions:
             cfg = {
                 data: { test: true },
                 json: true
-            },
-            promise = XHR.promise(xhr, cfg);
+            };
+        XHR.config(xhr, cfg);
+        var promise = XHR.promise(xhr, cfg);
         ok(promise instanceof Promise);
         stop();
         promise.then(function(fake) {
             start();
             equal(fake.status, 200);
+            deepEqual(fake.response, fake.responseObject);
             deepEqual(fake.response, { test: true });
         });
 
@@ -132,6 +160,7 @@ Test assertions:
         cfg = {
             data: 'error'
         };
+        XHR.config(xhr, cfg);
         promise = XHR.promise(xhr, cfg);
         stop();
         promise.catch(function(fake) {
@@ -145,6 +174,7 @@ Test assertions:
             data: 'timeout',
             timeout: 200
         };
+        XHR.config(xhr, cfg);
         promise = XHR.promise(xhr, cfg);
         stop();
         promise.catch(function(fake) {
@@ -212,7 +242,8 @@ Test assertions:
     });
 
     test('XHR.forceJSONResponse', function() {
-        var xhr = { responseText: '{"foo":true}' };
+        var xhr = new FakeXHR();
+        xhr.responseText = '{"foo":true}';
         Object.defineProperty(xhr, 'response', {
             value: xhr.responseText,
             configurable: true,
@@ -228,7 +259,7 @@ Test assertions:
         strictEqual(xhr.responseObject, xhr.response);
     });
 
-    test('XHR.rethrow', function() {
+    test('XHR.chain', function() {
         expect(10);
         var fn = function(xhr) {
             ok(true, 'fn should be called');
@@ -236,9 +267,9 @@ Test assertions:
                 return xhr.ret;
             }
         },
-        rfn = XHR.rethrow(fn);
-        equal(typeof rfn, 'function', 'rethrow returns a function');
-        notStrictEqual(fn, rfn, 'rethrow returns a different function');
+        rfn = XHR.chain(fn);
+        equal(typeof rfn, 'function', 'chain returns a function');
+        notStrictEqual(fn, rfn, 'chain returns a different function');
         
         equal(rfn({ ret:'chain' }), 'chain', 'should let functions change result');
         

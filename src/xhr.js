@@ -1,8 +1,9 @@
-var XHR = JCX.xhr = function() {
-    return XHR.main.apply(this, arguments);
+var XHR = JCX.xhr = function(cfg) {
+    return XHR.main(cfg);
 },
 htmlClass = D.documentElement.classList;
 
+XHR.ctor = XMLHttpRequest;
 XHR.main = function(cfg) {
     var xhr, 
         promise;
@@ -14,7 +15,7 @@ XHR.main = function(cfg) {
         }
     }
     if (!promise) {
-        xhr = new XMLHttpRequest();
+        xhr = new XHR.ctor();
         XHR.config(xhr, cfg);
         promise = XHR.promise(xhr, cfg);
         if (cfg.cache) {
@@ -22,9 +23,10 @@ XHR.main = function(cfg) {
         }
     }
 
+    var always = XHR.chain(cfg.always);
     promise = promise
-        .then(cfg.always, XHR.rethrow(cfg.always))
-        .then(cfg.then, cfg.catch);
+        .then(always, always)
+        .then(XHR.chain(cfg.then), XHR.chain(cfg.catch));
 
     promise.xhr = xhr;
     return promise;
@@ -111,15 +113,13 @@ XHR.promise = function(xhr, cfg) {
             error(e);
         }
     });
-    return cfg.retry ? promise.catch(XHR.rethrow(XHR.retry)) : promise;
+    return cfg.retry ? promise.catch(XHR.chain(XHR.retry)) : promise;
 };
 
 XHR.forceJSONResponse = function(xhr) {
     try {
-        var res = xhr.responseObject =
-            xhr.responseText ? JSON.parse(xhr.responseText) : null;
         delete xhr.response;
-        Object.defineProperty(xhr, 'response', { value: res, configurable: true });
+        Object.defineProperty(xhr, 'response', { value: xhr.responseObject, configurable: true });
     } catch (e) {}
 };
 
@@ -134,28 +134,41 @@ XHR.data = function(cfg) {
     return data || '';
 };
 
-Object.defineProperties(
-    XMLHttpRequest.prototype,
-    {
-        responseHeaders: {
-            get: function() {
-                var headers = {},
-                    all = this.getAllResponseHeaders().trim().split('\n');
-                for (var i=0,m=all.length, header; i<m; i++) {
-                    if ((header = all[i])) {
-                        var parts = header.match(/^([\w\-]+):(.*)/);
-                        if (parts.length === 3) {
-                            headers[parts[1]] = parts[2].trim();
-                        }
+XHR.properties = {
+    responseObject: {
+        get: function() {
+            var response = null;
+            try {
+                if (this.responseText) {
+                    response = JSON.parse(this.responseText);
+                }
+            } catch (e) {}
+            Object.defineProperty(this, 'responseObject', {value:response});
+            return response;
+        },
+        enumerable: true,
+        configurable: true
+    },
+    responseHeaders: {
+        get: function() {
+            var headers = {},
+                all = this.getAllResponseHeaders().trim().split('\n');
+            for (var i=0,m=all.length, header; i<m; i++) {
+                if ((header = all[i])) {
+                    var parts = header.match(/^([\w\-]+):(.*)/);
+                    if (parts.length === 3) {
+                        headers[parts[1]] = parts[2].trim();
                     }
                 }
-                Object.defineProperty(this, 'responseHeaders', {value:headers});
-                return headers;
-            },
-            configurable: true
-        }
+            }
+            Object.defineProperty(this, 'responseHeaders', {value:headers});
+            return headers;
+        },
+        enumerable: true,
+        configurable: true
     }
-);
+};
+Object.defineProperties(XMLHttpRequest.prototype, XHR.properties);
 
 XHR.active = 0;
 XHR.activeClass = 'xhr-active';
@@ -175,6 +188,7 @@ XHR.key = function(cfg) {
 XHR.cache = function(xhr) {
     var cfg = xhr.cfg;
     store(XHR.key(cfg), XHR.safeCopy(xhr), cfg.cache);
+    return xhr;
 };
 XHR.safeCopy = function(object, copied) {
     var copy = {};
@@ -197,9 +211,9 @@ XHR.safeCopy = function(object, copied) {
     }
 };
 
-XHR.rethrow = function(fn) {
+XHR.chain = function(fn) {
     if (fn) {
-        return function rethrow(xhr) {
+        return function chain(xhr) {
             var ret = fn(xhr);
             return ret !== xhr && ret !== undefined ? ret :
                    xhr.error ? Promise.reject(xhr) :
