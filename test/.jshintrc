@@ -13,6 +13,7 @@
   "browser": true,
   "predef": [
     "JCX",
+    "Promise",
     "QUnit",
     "module",
     "test",

@@ -14,7 +14,8 @@ XHR.main = function(cfg) {
         }
     }
     if (!promise) {
-        xhr = XHR.create(cfg);
+        xhr = new XMLHttpRequest();
+        XHR.config(xhr, cfg);
         promise = XHR.promise(xhr, cfg);
         if (cfg.cache) {
             promise = promise.then(XHR.cache);
@@ -25,17 +26,16 @@ XHR.main = function(cfg) {
         .then(cfg.always, XHR.rethrow(cfg.always))
         .then(cfg.then, cfg.catch);
 
-    xhr.cfg = cfg;
     promise.xhr = xhr;
     return promise;
 };
 
-XHR.create = function(cfg) {
-    var xhr = new XMLHttpRequest();
+XHR.config = function(xhr, cfg) {
     xhr.open(XHR.method(cfg),
              XHR.url(cfg),
              'async' in cfg ? cfg.async : true,
              cfg.username, cfg.password);
+    xhr.cfg = cfg;
     for (var prop in cfg) {
         if (prop in xhr) {
             xhr[prop] = cfg[prop];
@@ -44,60 +44,83 @@ XHR.create = function(cfg) {
     if (cfg.mimeType) {
         xhr.overrideMimeType(cfg.mimeType);
     }
-    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    if (cfg.requestedWith !== false) {
+        xhr.setRequestHeader('X-Requested-With', cfg.requestedWith || 'XMLHttpRequest');
+    }
+    if (cfg.json) {
+        xhr.responseType = 'json';
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+    }
     if (cfg.headers) {
         for (var header in cfg.headers) {
             xhr.setRequestHeader(header, cfg.headers[header]);
         }
     }
-    return xhr;
 };
 
 XHR.method = function(cfg) {
     return XHR.methodMap[cfg.method] || cfg.method || 'GET';
 };
-
 XHR.methodMap = {
     PATCH: 'POST'
 };
 
 XHR.url = function(cfg) {
-    var url = cfg.url;
-    while (url.indexOf('..') >= 0) {
-        url = url.replace(/[\/\?\&][^\/\.\?\&]+[\/\?\&]?\.\.([\/\?\&]?)/, '$1');
+    var url = cfg.url,
+        was;
+    while (was !== url) {
+        was = url;
+        url = url.replace(/([\/\?\&]|^)[^\/\.\?\&]+[\/\?\&]?\.\.([\/\?\&]?)/, '$1');
     }
     return url;
 };
 
 XHR.promise = function(xhr, cfg) {
-    return new Promise(function(resolve, reject) {
-        XHR.start();
-
-        var error = xhr.onerror = function(e) {
+    var promise = new Promise(function(resolve, reject) {
+        var error = function(e) {
             xhr.error = e;
             reject(xhr);
         };
+        xhr.onerror = xhr.ontimeout = error;
+        xhr.onloadstart = XHR.start;
         xhr.onload = function() {
             try {
-                // allow cfg to re-map status codes (e.g. {0: 200} for file://)
-                var status = cfg.status ? cfg.status[xhr.status] : xhr.status;
-                (status >= 200 && status < 400 ? resolve : reject)(xhr);
+                // cfg status code handling (e.g. {0: 200} for file://)
+                var status = cfg[xhr.status] || xhr.status;
+                if (typeof status === "function") {
+                    status = status(xhr) || xhr.status;
+                }
+                if (status >= 200 && status < 300) {
+                    if (cfg.json && typeof xhr.response !== "object") {
+                        XHR.forceJSONResponse(xhr);
+                    }
+                    resolve(xhr);
+                } else {
+                    error(status);
+                }
             } catch (e) {
                 error(e);
             }
         };
-        if (xhr.timeout) {
-            xhr.ontimeout = error;
-        }
+        xhr.onloadend = XHR.end;
 
         try {
             xhr.send(XHR.data(cfg));
         } catch (e) {
             error(e);
         }
-    })
-    .then(XHR.end, XHR.rethrow(XHR.end))
-    .catch(XHR.rethrow(XHR.retry));
+    });
+    return cfg.retry ? promise.catch(XHR.rethrow(XHR.retry)) : promise;
+};
+
+XHR.forceJSONResponse = function(xhr) {
+    try {
+        var res = xhr.responseObject =
+            xhr.responseText ? JSON.parse(xhr.responseText) : null;
+        delete xhr.response;
+        Object.defineProperty(xhr, 'response', { value: res, configurable: true });
+    } catch (e) {}
 };
 
 XHR.data = function(cfg) {
@@ -114,16 +137,6 @@ XHR.data = function(cfg) {
 Object.defineProperties(
     XMLHttpRequest.prototype,
     {
-        responseValue: {
-            get: function() {
-                if (this.responseText) {
-                    var object = JSON.parse(this.responseText);
-                    Object.defineProperty(this, 'responseValue', {value:object});
-                    return object;
-                }
-            },
-            configurable: true
-        },
         responseHeaders: {
             get: function() {
                 var headers = {},
@@ -145,17 +158,15 @@ Object.defineProperties(
 );
 
 XHR.active = 0;
+XHR.activeClass = 'xhr-active';
 XHR.start = function() {
     XHR.active++;
-    htmlClass.add('jcx-loading');
+    htmlClass.add(XHR.activeClass);
 };
-XHR.end = function(xhr) {
-    XHR.active--;
-    if (!XHR.active) {
-        htmlClass.remove('jcx-loading');
+XHR.end = function() {
+    if (!--XHR.active) {
+        htmlClass.remove(XHR.activeClass);
     }
-    var handler = xhr.cfg[xhr.status];
-    return handler && handler(xhr) || xhr;
 };
 
 XHR.key = function(cfg) {
@@ -165,27 +176,34 @@ XHR.cache = function(xhr) {
     var cfg = xhr.cfg;
     store(XHR.key(cfg), XHR.safeCopy(xhr), cfg.cache);
 };
-XHR.safeCopy = function(object) {
+XHR.safeCopy = function(object, copied) {
     var copy = {};
-    for (var name in object) {
-        var value = object[name],
-            type = typeof value;
-        if (value && type !== 'function') {
-            copy[name] = type === 'object' ? XHR.safeCopy(value) : value;
+    copied = copied || [];
+    if (copied.indexOf(object) < 0) {
+        copied.push(object);
+        for (var name in object) {
+            var value = object[name],
+                type = typeof value;
+            if (type === 'function') {
+                value = undefined;
+            } else if (type === 'object') {
+                value = XHR.safeCopy(value, copied);
+            }
+            if (value !== undefined) {
+                copy[name] = value;
+            }
         }
+        return copy;
     }
-    return copy;
 };
 
 XHR.rethrow = function(fn) {
     if (fn) {
         return function rethrow(xhr) {
             var ret = fn(xhr);
-            return ret !== xhr && ret !== undefined ?
-                ret :
-                xhr.error || xhr.status >= 400 || xhr.status < 200 ?
-                    Promise.reject(xhr) :
-                    xhr;
+            return ret !== xhr && ret !== undefined ? ret :
+                   xhr.error ? Promise.reject(xhr) :
+                   xhr;
         };
     }
 };
