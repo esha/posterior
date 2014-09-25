@@ -153,21 +153,19 @@ API.get = function(cfg, name, inheriting) {
 };
 
 API.set = function(cfg, name, value, parentName) {
-    var api = cfg._fn;
+    var api = cfg._fn,
+        subname = parentName+(name.charAt(0)==='.'?'':'.')+name;
     // always bind functions to the cfg
     if (typeof value === "function") {
         value = value.bind(cfg);
         if (API.get(cfg, 'debug')) {
-            value = API.debug(
-                parentName+(name.charAt(0)==='.'?'':'.')+name,
-                value
-            );
+            value = API.debug(subname, value);
         }
     }
     if (name.charAt(0) === '.') {
         api[name.substring(1)] = value;
     } else if (name.charAt(0) === '@') {
-        api[name.substring(1)] = API.build(value, cfg, name);
+        api[name.substring(1)] = API.build(value, cfg, subname);
     } else if (name.charAt(0) === '_') {
         cfg._private[name.substring(1)] = value;
     } else {
