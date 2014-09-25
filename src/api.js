@@ -86,8 +86,8 @@ API.config = function(name, value) {
 };
 
 API.process = function(cfg) {
-    if (cfg.preprocess) {
-        cfg.preprocess(cfg);
+    if (cfg.configure) {
+        cfg.configure(cfg);
     }
     for (var name in cfg) {
         var value = cfg[name];
@@ -180,12 +180,11 @@ API.debug = function(name, fn) {
         concat = Array.prototype.concat;
     return function debug(arg) {
         try {
-            var ret = fn.apply(this, arguments),
-                args = concat.apply([name], arguments);
+            console.debug.apply(console, [name,'()'].concat(arguments));
+            var ret = fn.apply(this, arguments);
             if (ret !== undefined && ret !== arg) {
-                args.push(ret);
+                console.debug.apply(console, [name, '->', ret]);
             }
-            console.debug.apply(console, args);
             return ret;
         } catch (e) {
             var args = concat.apply([name, e], arguments);

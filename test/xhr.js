@@ -197,7 +197,7 @@ Test assertions:
         strictEqual(XHR.data(cfg), 'true');
         cfg = { data: {json:'yep'}};
         strictEqual(XHR.data(cfg), '{"json":"yep"}');
-        cfg = {data : 0, serialize: function(data){ return data ? data : ''; }};
+        cfg = {data : 0, transformData: function(data){ return data ? data : ''; }};
         strictEqual(XHR.data(cfg), '');
     });
 

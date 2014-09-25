@@ -125,8 +125,9 @@ XHR.forceJSONResponse = function(xhr) {
 
 XHR.data = function(cfg) {
     var data = cfg.data;
-    if (cfg.serialize) {
-        data = cfg.serialize(data);
+    if (cfg.transformData) {
+        var ret = cfg.transformData(data);
+        data = ret === undefined ? data : ret;// don't require fn to return new object
     }
     if (data !== undefined && typeof data !== "string") {
         data = JSON.stringify(data);
