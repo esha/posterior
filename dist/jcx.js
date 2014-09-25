@@ -1,4 +1,4 @@
-/*! jcx - v0.5.4 - 2014-09-19
+/*! jcx - v0.6.0 - 2014-09-24
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -135,8 +135,9 @@ XHR.forceJSONResponse = function(xhr) {
 
 XHR.data = function(cfg) {
     var data = cfg.data;
-    if (cfg.serialize) {
-        data = cfg.serialize(data);
+    if (cfg.transformData) {
+        var ret = cfg.transformData(data);
+        data = ret === undefined ? data : ret;// don't require fn to return new object
     }
     if (data !== undefined && typeof data !== "string") {
         data = JSON.stringify(data);
@@ -340,8 +341,8 @@ API.config = function(name, value) {
 };
 
 API.process = function(cfg) {
-    if (cfg.preprocess) {
-        cfg.preprocess(cfg);
+    if (cfg.configure) {
+        cfg.configure(cfg);
     }
     for (var name in cfg) {
         var value = cfg[name];
@@ -434,12 +435,11 @@ API.debug = function(name, fn) {
         concat = Array.prototype.concat;
     return function debug(arg) {
         try {
-            var ret = fn.apply(this, arguments),
-                args = concat.apply([name], arguments);
+            console.debug.apply(console, [name,'()'].concat(arguments));
+            var ret = fn.apply(this, arguments);
             if (ret !== undefined && ret !== arg) {
-                args.push(ret);
+                console.debug.apply(console, [name, '->', ret]);
             }
-            console.debug.apply(console, args);
             return ret;
         } catch (e) {
             var args = concat.apply([name, e], arguments);

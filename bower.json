@@ -1,6 +1,6 @@
 {
   "name": "jcx",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "main": "dist/jcx.js",
   "description": "Hierarchical configuration of JSON XHR communication for your APIs",
   "keywords": [
