@@ -1,4 +1,4 @@
-/*! jcx - v0.6.1 - 2014-09-24
+/*! jcx - v0.6.2 - 2014-10-06
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -210,16 +210,18 @@ XHR.safeCopy = function(object, copied) {
     if (copied.indexOf(object) < 0) {
         copied.push(object);
         for (var name in object) {
-            var value = object[name],
-                type = typeof value;
-            if (type === 'function') {
-                value = undefined;
-            } else if (type === 'object') {
-                value = XHR.safeCopy(value, copied);
-            }
-            if (value !== undefined) {
-                copy[name] = value;
-            }
+            try {
+                var value = object[name],
+                    type = typeof value;
+                if (type === 'function') {
+                    value = undefined;
+                } else if (type === 'object') {
+                    value = XHR.safeCopy(value, copied);
+                }
+                if (value !== undefined) {
+                    copy[name] = value;
+                }
+            } catch (e) {}
         }
         return copy;
     }
