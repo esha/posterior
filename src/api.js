@@ -129,7 +129,7 @@ API.copy = function(to, from) {
             if (name.charAt(0) === '!') {
                 to[name.substring(1)] = from[name];
             } else {
-                to[name] = API.combine(to[name], from[name]);
+                to[name] = API.combine(to[name], from[name], to);
             }
         }
     }
@@ -145,9 +145,9 @@ API.get = function(cfg, name, inheriting) {
         return cfg[iname];
     }
     var value = inheriting ? cfg[name] :
-                API.combine(cfg[name], priv[name]);
+                API.combine(cfg[name], priv[name], cfg);
     if (cfg._parent) {
-        return API.combine(API.get(cfg._parent, name, true), value);
+        return API.combine(API.get(cfg._parent, name, true), value, cfg);
     }
     return value;
 };
@@ -188,7 +188,7 @@ API.debug = function(name, fn) {
     };
 };
 
-API.combine = function(pval, val) {
+API.combine = function(pval, val, cfg) {
     var ptype = API.type(pval),
         type = API.type(val);
     return (
@@ -197,8 +197,8 @@ API.combine = function(pval, val) {
         !ptype ? val :
         // mismatched types
         type !== ptype ?
-            ptype === 'function' ? pval(val) :
-            type === 'function' ? val(pval) :
+            ptype === 'function' ? pval.call(cfg, val) :
+            type === 'function' ? val.call(cfg, pval) :
             ptype === 'array' ? pval.concat(val) :
             type === 'array' ? [].concat.apply([pval], val) :
                 pval + val :
