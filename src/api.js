@@ -155,12 +155,8 @@ API.get = function(cfg, name, inheriting) {
 API.set = function(cfg, name, value, parentName) {
     var api = cfg._fn,
         subname = parentName+(name.charAt(0)==='.'?'':'.')+name;
-    // always bind functions to the cfg
-    if (typeof value === "function") {
-        value = value.bind(cfg);
-        if (API.get(cfg, 'debug')) {
-            value = API.debug(subname, value);
-        }
+    if (typeof value === "function" && API.get(cfg, 'debug')) {
+        value = API.debug(subname, value);
     }
     if (name.charAt(0) === '.') {
         api[name.substring(1)] = value;
@@ -217,8 +213,9 @@ API.combine = function(pval, val) {
 
 API.combineFn = function(pfn, fn) {
     return function combined(res) {
-        //TODO: reconsider whether falsey return values should be respected
-        return fn(pfn(res) || res) || res;
+        var ret = pfn.call(this, res);
+        ret = fn.call(this, ret === undefined ? res : ret);
+        return ret === undefined ? res : ret;
     };
 };
 
