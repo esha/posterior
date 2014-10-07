@@ -119,7 +119,7 @@ XHR.promise = function(xhr, cfg) {
 XHR.forceJSONResponse = function(xhr) {
     try {
         delete xhr.response;
-        Object.defineProperty(xhr, 'response', { value: xhr.responseObject, configurable: true });
+        Object.defineProperty(xhr, 'response', { value: xhr.responseObject, enumerable: true, configurable: true });
     } catch (e) {}
 };
 
