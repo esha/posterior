@@ -18,16 +18,10 @@ XHR.main = function(cfg) {
         xhr = new XHR.ctor();
         XHR.config(xhr, cfg);
         promise = XHR.promise(xhr, cfg);
-        if (cfg.cache) {
-            promise = promise.then(XHR.cache);
+        if (cfg.retry) {
+            promise = promise.catch(XHR.retry.bind(xhr));
         }
     }
-
-    var always = XHR.chain(cfg.always);
-    promise = promise
-        .then(always, always)
-        .then(XHR.chain(cfg.then), XHR.chain(cfg.catch));
-
     promise.xhr = xhr;
     return promise;
 };
@@ -39,8 +33,12 @@ XHR.config = function(xhr, cfg) {
              cfg.username, cfg.password);
     xhr.cfg = cfg;
     for (var prop in cfg) {
+        var value = cfg[prop];
         if (prop in xhr) {
-            xhr[prop] = cfg[prop];
+            xhr[prop] = value;
+        }
+        if (typeof value === "function") {
+            xhr.addEventListener(prop, value.bind(xhr));
         }
     }
     if (cfg.mimeType) {
@@ -49,7 +47,7 @@ XHR.config = function(xhr, cfg) {
     if (cfg.requestedWith !== false) {
         xhr.setRequestHeader('X-Requested-With', cfg.requestedWith || 'XMLHttpRequest');
     }
-    if (cfg.json) {
+    if (cfg.json !== false) {
         xhr.responseType = 'json';
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-Type', 'application/json');
@@ -79,41 +77,52 @@ XHR.url = function(cfg) {
 };
 
 XHR.promise = function(xhr, cfg) {
-    var promise = new Promise(function(resolve, reject) {
-        var error = function(e) {
-            xhr.error = e;
-            reject(xhr);
+    return new Promise(function(resolve, reject) {
+        var fail = function(e) {
+            reject(xhr.error = e);
+        },
+        events = {
+            error: fail,
+            timeout: fail,
+            loadstart: XHR.start,
+            loadend: XHR.end,
+            load: XHR.load(xhr, cfg, resolve, fail)
         };
-        xhr.onerror = xhr.ontimeout = error;
-        xhr.onloadstart = XHR.start;
-        xhr.onload = function() {
-            try {
-                // cfg status code handling (e.g. {0: 200} for file://)
-                var status = cfg[xhr.status] || xhr.status;
-                if (typeof status === "function") {
-                    status = status(xhr) || xhr.status;
-                }
-                if (status >= 200 && status < 300) {
-                    if (cfg.json && typeof xhr.response !== "object") {
-                        XHR.forceJSONResponse(xhr);
-                    }
-                    resolve(xhr);
-                } else {
-                    error(status);
-                }
-            } catch (e) {
-                error(e);
-            }
-        };
-        xhr.onloadend = XHR.end;
+        for (var event in events) {
+            xhr.addEventListener(event, events[event]);
+        }
 
         try {
             xhr.send(XHR.data(cfg));
         } catch (e) {
-            error(e);
+            fail(e);
         }
     });
-    return cfg.retry ? promise.catch(XHR.chain(XHR.retry)) : promise;
+};
+
+XHR.load = function(xhr, cfg, resolve, reject) {
+    return function() {
+        try {
+            // cfg status code handling (e.g. {0: 200} for file://)
+            var status = cfg[xhr.status] || xhr.status;
+            if (typeof status === "function") {
+                status = status.call(cfg, xhr) || xhr.status;
+            }
+            if (status >= 200 && status < 300) {
+                if (cfg.json !== false && typeof xhr.response !== "object") {
+                    XHR.forceJSONResponse(xhr);
+                }
+                if (cfg.cache) {
+                    XHR.cache(xhr);
+                }
+                resolve(xhr.response || xhr.responseText || xhr);
+            } else {
+                reject(status);
+            }
+        } catch (e) {
+            reject(e);
+        }
+    };
 };
 
 XHR.forceJSONResponse = function(xhr) {
@@ -217,20 +226,10 @@ XHR.safeCopy = function(object, copied) {
     }
 };
 
-XHR.chain = function(fn) {
-    if (fn) {
-        return function chain(xhr) {
-            var ret = fn(xhr);
-            return ret !== xhr && ret !== undefined ? ret :
-                   xhr.error ? Promise.reject(xhr) :
-                   xhr;
-        };
-    }
-};
-
-XHR.retry = function(xhr) {
-    var retry = xhr.cfg.retry;
-    if (retry && (retry.limit || 3) > retry.count) {
+XHR.retry = function(e) {
+    var xhr = this,
+        retry = xhr.cfg.retry;
+    if ((retry.limit || 3) > retry.count) {
         if (typeof retry === 'number') {
             retry = { wait: retry };
         }
@@ -242,5 +241,5 @@ XHR.retry = function(xhr) {
             }, retry.wait || 1000);
         });
     }
-    return xhr;
+    return Promise.reject(e);
 };

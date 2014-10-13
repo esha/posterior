@@ -20,7 +20,8 @@ Test assertions:
   throws(block, [expected], [message])
 */
     module("xhr");
-    var XHR = JCX.xhr;
+    var XHR = JCX.xhr,
+        API = JCX.api;
 
     test("API exists", function() {
         ok(XHR);
@@ -38,6 +39,13 @@ Test assertions:
         this._async = async;
         this._username = user;
         this._password = pass;
+    };
+    FakeXHR.prototype.addEventListener = function(event, fn) {
+        event = 'on'+event;
+        if (event in this) {
+            fn = API.combineFn(this[event], fn);
+        }
+        this[event] = fn;
     };
     FakeXHR.prototype.overrideMimeType = function(type) {
         this._mimeType = type;
@@ -76,21 +84,19 @@ Test assertions:
         XHR.ctor = FakeXHR;
         var promise = XHR({
             url: '/main',
+            json: true,
             response: '{"json":true}',
-            always: function(xhr) {
-                start();
-                equal(xhr._url, '/main');
-                equal(xhr._method, 'GET');
-                stop();
-                return xhr;
+            loadend: function() {
+                equal(this._url, '/main', 'loadend right url');
+                equal(this._method, 'GET', 'loadend right method');
             }
         });
         ok(promise.xhr instanceof FakeXHR, 'promise.xhr should be fake');
         stop();
-        promise.then(function(xhr) {
+        promise.then(function(response) {
             start();
-            ok(xhr instanceof FakeXHR, 'argument should be FakeXHR');
-            ok(xhr.responseObject.json, 'should get json response');
+            ok(response.json, 'should get json response');
+            equal(promise.xhr.response, response, 'arg should be xhr.response');
         });
         delete XHR.ctor;
     });
@@ -103,7 +109,6 @@ Test assertions:
                 password: 'this',
                 mimeType: 'application/json',
                 requestedWith: false,
-                json: true,
                 headers: {
                     Whatever: 'You Want'
                 },
@@ -129,6 +134,7 @@ Test assertions:
         cfg = {
             url: '/',
             method: 'POST',
+            json: false,
             async: false
         };
         xhr = new FakeXHR();
@@ -139,11 +145,10 @@ Test assertions:
         strictEqual(xhr._headers.Accept, undefined);
     });
 
-    test('XHR.promise', function() {
+    test('XHR.promise - part 1', function() {
         var xhr = new FakeXHR(),
             cfg = {
-                data: { test: true },
-                json: true
+                data: { test: true }
             };
         XHR.config(xhr, cfg);
         var promise = XHR.promise(xhr, cfg);
@@ -151,36 +156,41 @@ Test assertions:
         stop();
         promise.then(function(fake) {
             start();
-            equal(fake.status, 200);
-            deepEqual(fake.response, fake.responseObject);
-            deepEqual(fake.response, { test: true });
+            equal(xhr.status, 200);
+            deepEqual(fake, xhr.responseObject);
+            deepEqual(fake, { test: true });
         });
+    });
 
-        xhr = new FakeXHR();
-        cfg = {
-            data: 'error'
-        };
+    test('XHR.promise - part 2', function() {
+        var xhr = new FakeXHR(),
+            cfg = {
+                data: 'error'
+            };
         XHR.config(xhr, cfg);
-        promise = XHR.promise(xhr, cfg);
+        var promise = XHR.promise(xhr, cfg);
         stop();
         promise.catch(function(fake) {
             start();
-            equal(fake.status, 500);
-            equal(fake.error, 'error');
+            equal(xhr.status, 500);
+            equal(xhr.error, 'error');
+            equal(fake, 'error');
         });
+    });
 
-        xhr = new FakeXHR();
-        cfg = {
-            data: 'timeout',
-            timeout: 200
-        };
+    test('XHR.promise - part 3', function() {
+        var xhr = new FakeXHR(),
+            cfg = {
+                data: 'timeout',
+                timeout: 200
+            };
         XHR.config(xhr, cfg);
-        promise = XHR.promise(xhr, cfg);
+        var promise = XHR.promise(xhr, cfg);
         stop();
         promise.catch(function(fake) {
             start();
-            ok(!fake.status);
-            equal(fake.error, 'timeout');
+            ok(!xhr.status);
+            equal(fake, 'timeout');
         });
     });
 
@@ -234,6 +244,12 @@ Test assertions:
             good: true,
             bad: function(){}
         };
+        Object.defineProperty(xhr, 'evil', {
+            get: function() {
+                throw 'BWAHAHAHA';
+            },
+            enumerable: true
+        });
         deepEqual(XHR.safeCopy(xhr), {good:true}, 'should not copy functions');
 
         xhr = { nest: { bad: false } };
@@ -257,37 +273,6 @@ Test assertions:
         XHR.forceJSONResponse(xhr);
         deepEqual(xhr.response, {foo:true});
         strictEqual(xhr.responseObject, xhr.response);
-    });
-
-    test('XHR.chain', function() {
-        expect(10);
-        var fn = function(xhr) {
-            ok(true, 'fn should be called');
-            if (xhr.ret) {
-                return xhr.ret;
-            }
-        },
-        rfn = XHR.chain(fn);
-        equal(typeof rfn, 'function', 'chain returns a function');
-        notStrictEqual(fn, rfn, 'chain returns a different function');
-        
-        equal(rfn({ ret:'chain' }), 'chain', 'should let functions change result');
-        
-        var xhr = {};
-        equal(rfn(xhr), xhr, 'should pass thru good xhr');
-
-        xhr = { error: 404 };
-        var rejected = rfn(xhr);
-        notEqual(rejected, xhr, 'should not pass bad xhr');
-        ok(rejected instanceof Promise, 'bad xhr returns rejected promise');
-        stop();
-        rejected.then(function() {
-            start();
-            ok(false, 'should not be resolved');
-        }, function(o) {
-            start();
-            equal(o, xhr, 'rejected promise handlers should still get xhr');
-        });
     });
 
 }());
