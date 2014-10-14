@@ -174,7 +174,9 @@ API.debug = function(name, fn) {
         concat = Array.prototype.concat;
     return function debug(arg) {
         try {
-            console.debug.apply(console, [name,'()'].concat(arguments));
+            var args = [name+'('];
+            args.push.apply(args, arguments);
+            args.push(')');
             var ret = fn.apply(this, arguments);
             if (ret !== undefined && ret !== arg) {
                 console.debug.apply(console, [name, '->', ret]);
