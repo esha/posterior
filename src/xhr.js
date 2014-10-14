@@ -22,6 +22,12 @@ XHR.main = function(cfg) {
             promise = promise.catch(XHR.retry.bind(xhr));
         }
     }
+    if (cfg.then) {
+        promise = promise.then(cfg.then);
+    }
+    if (cfg.catch) {
+        promise = promise.catch(cfg.catch);
+    }
     promise.xhr = xhr;
     return promise;
 };
@@ -38,7 +44,7 @@ XHR.config = function(xhr, cfg) {
             xhr[prop] = value;
         }
         if (typeof value === "function") {
-            xhr.addEventListener(prop, value.bind(xhr));
+            xhr.addEventListener(prop, cfg[prop] = value.bind(xhr));
         }
     }
     if (cfg.mimeType) {
@@ -106,7 +112,7 @@ XHR.load = function(xhr, cfg, resolve, reject) {
             // cfg status code handling (e.g. {0: 200} for file://)
             var status = cfg[xhr.status] || xhr.status;
             if (typeof status === "function") {
-                status = status.call(cfg, xhr) || xhr.status;
+                status = status(xhr) || xhr.status;
             }
             if (status >= 200 && status < 300) {
                 if (cfg.json !== false && typeof xhr.response !== "object") {
@@ -115,7 +121,12 @@ XHR.load = function(xhr, cfg, resolve, reject) {
                 if (cfg.cache) {
                     XHR.cache(xhr);
                 }
-                resolve(xhr.response || xhr.responseText || xhr);
+                var data = xhr.response || xhr.responseText;
+                if (cfg.responseData && XHR.isData(data)) {
+                    var ret = cfg.responseData(data);
+                    data = ret === undefined ? data : ret;
+                }
+                resolve(XHR.isData(data) ? data : xhr);
             } else {
                 reject(status);
             }
@@ -132,11 +143,15 @@ XHR.forceJSONResponse = function(xhr) {
     } catch (e) {}
 };
 
+XHR.isData = function(data) {
+    // reject as impossible output by JSON.stringify, invalid input to JSON.parse
+    return !(data === undefined || data === '');
+};
 XHR.data = function(cfg) {
     var data = cfg.data;
-    if (cfg.transformData) {
-        var ret = cfg.transformData(data);
-        data = ret === undefined ? data : ret;// don't require fn to return new object
+    if (cfg.requestData && XHR.isData(data)) {
+        var ret = cfg.requestData(data);
+        data = ret === undefined ? data : ret;// return new object or keep old
     }
     if (data !== undefined && typeof data !== "string") {
         data = JSON.stringify(data);

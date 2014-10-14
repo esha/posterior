@@ -80,23 +80,33 @@ Test assertions:
     Object.defineProperties(FakeXHR.prototype, XHR.properties);
 
     test('XHR.main', function() {
-        expect(5);
+        expect(9);
         XHR.ctor = FakeXHR;
-        var promise = XHR({
+        var promise;
+        promise = XHR({
             url: '/main',
-            json: true,
+            responseData: function(res) {
+                ok(this instanceof FakeXHR, 'context should be xhr');
+                res.altered = true;
+            },
             response: '{"json":true}',
-            loadend: function() {
-                equal(this._url, '/main', 'loadend right url');
-                equal(this._method, 'GET', 'loadend right method');
+            load: function() {
+                equal(this._url, '/main', 'load right url');
+                equal(this._method, 'GET', 'load right method');
+                deepEqual(this.responseText, '{"json":true}', 'response not parsed or altered yet');
             }
         });
+        ok(promise instanceof Promise, 'should have promise');
         ok(promise.xhr instanceof FakeXHR, 'promise.xhr should be fake');
         stop();
         promise.then(function(response) {
             start();
             ok(response.json, 'should get json response');
+            ok(response.altered, 'should be altered');
             equal(promise.xhr.response, response, 'arg should be xhr.response');
+        }).catch(function(e) {
+            start();
+            ok(!e, e);
         });
         delete XHR.ctor;
     });
@@ -202,12 +212,21 @@ Test assertions:
         equal(XHR.method(cfg), 'DELETE');
     });
 
+    test('XHR.isData', function() {
+        ok(XHR.isData({}), 'object is data');
+        ok(XHR.isData(0), '0 is data');
+        ok(!XHR.isData(''), 'empty string is not data');
+        ok(XHR.isData(false), 'false is data');
+        ok(!XHR.isData(undefined), 'undefined is not data');
+        ok(XHR.isData(null), 'null is data');
+    });
+
     test('XHR.data', function() {
         var cfg = { data: true };
         strictEqual(XHR.data(cfg), 'true');
         cfg = { data: {json:'yep'}};
         strictEqual(XHR.data(cfg), '{"json":"yep"}');
-        cfg = {data : 0, transformData: function(data){ return data ? data : ''; }};
+        cfg = {data : 0, requestData: function(data){ return data ? data : ''; }};
         strictEqual(XHR.data(cfg), '');
     });
 
