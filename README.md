@@ -20,7 +20,7 @@ Download: [jcx.min.js][full-min] or [jcx.js][full] [![Build Status](https://trav
 * 2014-09-17 [v0.4.0][] (retry options, css activity notification)
 * 2014-09-19 [v0.5.4][] (XHR tests, json cfg shortcut, better structure, safer copy, responseObject property, et al)
 * 2014-09-24 [v0.6.2][] (s/serialize/transformData, s/preprocess/configure, better debug output)
-* 2014-10-13 [v0.7.2][] (support all XHR events, JSON default, resolve/reject promise with response/error, request/responseData handler support)
+* 2014-10-13 [v0.7.3][] (support all XHR events, JSON default, resolve/reject promise with response/error, request/responseData handler support)
 
 [v0.1.4]: https://github.com/esha/jcx/tree/0.1.4
 [v0.2.3]: https://github.com/esha/jcx/tree/0.2.3
@@ -28,4 +28,4 @@ Download: [jcx.min.js][full-min] or [jcx.js][full] [![Build Status](https://trav
 [v0.4.0]: https://github.com/esha/jcx/tree/0.4.0
 [v0.5.4]: https://github.com/esha/jcx/tree/0.5.4
 [v0.6.2]: https://github.com/esha/jcx/tree/0.6.2
-[v0.7.2]: https://github.com/esha/jcx/tree/0.7.2
+[v0.7.3]: https://github.com/esha/jcx/tree/0.7.3
