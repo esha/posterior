@@ -1,4 +1,4 @@
-/*! jcx - v0.7.1 - 2014-10-14
+/*! jcx - v0.7.2 - 2014-10-15
 * http://esha.github.io/jcx/
 * Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
 
@@ -131,7 +131,7 @@ XHR.load = function(xhr, cfg, resolve, reject) {
                 if (cfg.cache) {
                     XHR.cache(xhr);
                 }
-                var data = xhr.response || xhr.responseText;
+                var data = xhr.responseType ? xhr.response : xhr.responseText;
                 if (cfg.responseData && XHR.isData(data)) {
                     var ret = cfg.responseData(data);
                     data = ret === undefined ? data : ret;
@@ -445,7 +445,9 @@ API.debug = function(name, fn) {
         concat = Array.prototype.concat;
     return function debug(arg) {
         try {
-            console.debug.apply(console, [name,'()'].concat(arguments));
+            var args = [name+'('];
+            args.push.apply(args, arguments);
+            args.push(')');
             var ret = fn.apply(this, arguments);
             if (ret !== undefined && ret !== arg) {
                 console.debug.apply(console, [name, '->', ret]);
