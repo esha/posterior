@@ -121,7 +121,7 @@ XHR.load = function(xhr, cfg, resolve, reject) {
                 if (cfg.cache) {
                     XHR.cache(xhr);
                 }
-                var data = xhr.response || xhr.responseText;
+                var data = xhr.responseType ? xhr.response : xhr.responseText;
                 if (cfg.responseData && XHR.isData(data)) {
                     var ret = cfg.responseData(data);
                     data = ret === undefined ? data : ret;
