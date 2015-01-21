@@ -27,7 +27,7 @@
     "test": "grunt qunit"
   },
   "dependencies": {
-    "es6-promise": "^2.0.1",
+    "promise-polyfill": "^1.1.6",
     "store2": "^2.1.6"
   },
   "devDependencies": {
