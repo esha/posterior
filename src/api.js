@@ -19,8 +19,12 @@ string/int concat means usual
 boolean concat means &&
 
 */
-var API = JCX.api = function(config, name) {
-    return API.build(config, null, name);
+var API = Posterior.api = function(config, name) {
+    var parent = config.extend || null;
+    if (parent && parent.cfg) {
+        parent = parent.cfg;
+    }
+    return API.build(config, parent, name);
 };
 
 API.build = function(config, parent, selfName) {
@@ -34,7 +38,7 @@ API.build = function(config, parent, selfName) {
     };
 
     if (config.debug || API.get(cfg, 'debug')) {
-        fn = cfg._fn = API.debug(selfName||'JCX', fn);
+        fn = cfg._fn = API.debug(selfName||'Posterior', fn);
     }
     for (var name in config) {
         API.set(cfg, name, config[name], selfName);

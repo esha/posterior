@@ -19,7 +19,7 @@ string/int concat means usual
 boolean concat means &&
 
 */
-window.services = JCX({
+window.services = Posterior({
     url: window.location.pathname+'proxy',
     //debug: true,
     options: function(type, url, data) {

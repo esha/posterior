@@ -20,7 +20,7 @@ Test assertions:
   throws(block, [expected], [message])
 */
     module("api");
-    var API = JCX.api;
+    var API = Posterior.api;
 
     test("API exists", function() {
         ok(API);
@@ -207,6 +207,12 @@ Test assertions:
         }).catch(function() {
             strictEqual('function', req);
         });
+    });
+
+    test('\'extend\' property', function() {
+        var base = API({ url: '/base' }, 'base'),
+            sub = API({ url: '/sub', extend: base }, 'sub');
+        equal('/base/sub', API.get(sub.cfg, 'url'));
     });
 
 }());

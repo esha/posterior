@@ -1,21 +1,21 @@
 {
-    "name": "jcx",
-    "repo": "esha/jcx",
-    "description": "Hierarchical configuration of JSON XHR communication for your APIs",
-    "version": "0.7.3",
-    "keywords": [
-        "JSON",
-        "AJAX",
-        "XHR",
-        "config",
-        "API"
-    ],
-    "dependencies": {},
-    "development": {},
-    "license": "MIT",
-    "main": "src/component.js",
-    "scripts": [
-        "src/component.js",
-        "dist/jcx.js"
-    ]
+  "name": "posterior",
+  "repo": "esha/posterior",
+  "description": "Hierarchical configuration of JSON XHR communication for your APIs",
+  "version": "0.8.0",
+  "keywords": [
+    "JSON",
+    "AJAX",
+    "XHR",
+    "config",
+    "API"
+  ],
+  "dependencies": {},
+  "development": {},
+  "license": "MIT",
+  "main": "src/component.js",
+  "scripts": [
+    "src/component.js",
+    "dist/posterior.js"
+  ]
 }

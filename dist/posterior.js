@@ -1,14 +1,14 @@
-/*! jcx - v0.7.3 - 2014-10-15
-* http://esha.github.io/jcx/
-* Copyright (c) 2014 ESHA Research; Licensed MIT, GPL */
+/*! posterior - v0.8.0 - 2015-03-11
+* http://esha.github.io/posterior/
+* Copyright (c) 2015 ESHA Research; Licensed MIT, GPL */
 
 (function(D, store) {
     "use strict";
 
-var JCX = window.JCX = function(config, name) {
-    return JCX.api(config, name);
+var Posterior = window.Posterior = function(config, name) {
+    return Posterior.api(config, name);
 };
-var XHR = JCX.xhr = function(cfg) {
+var XHR = Posterior.xhr = function(cfg) {
     return XHR.main(cfg);
 },
 htmlClass = D.documentElement.classList;
@@ -292,8 +292,12 @@ string/int concat means usual
 boolean concat means &&
 
 */
-var API = JCX.api = function(config, name) {
-    return API.build(config, null, name);
+var API = Posterior.api = function(config, name) {
+    var parent = config.extend || null;
+    if (parent && parent.cfg) {
+        parent = parent.cfg;
+    }
+    return API.build(config, parent, name);
 };
 
 API.build = function(config, parent, selfName) {
@@ -307,7 +311,7 @@ API.build = function(config, parent, selfName) {
     };
 
     if (config.debug || API.get(cfg, 'debug')) {
-        fn = cfg._fn = API.debug(selfName||'JCX', fn);
+        fn = cfg._fn = API.debug(selfName||'Posterior', fn);
     }
     for (var name in config) {
         API.set(cfg, name, config[name], selfName);
@@ -513,6 +517,6 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-JCX.version = "";
+Posterior.version = "";
 
 })(document, window.store || function(){});

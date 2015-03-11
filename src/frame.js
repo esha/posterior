@@ -2,10 +2,10 @@
 (function(D, store) {
     "use strict";
 
-var JCX = window.JCX = function(config, name) {
-    return JCX.api(config, name);
+var Posterior = window.Posterior = function(config, name) {
+    return Posterior.api(config, name);
 };
 <%= content %>
-JCX.version = "<%= version %>";
+Posterior.version = "<%= version %>";
 
 })(document, window.store || function(){});

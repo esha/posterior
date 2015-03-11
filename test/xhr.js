@@ -20,8 +20,8 @@ Test assertions:
   throws(block, [expected], [message])
 */
     module("xhr");
-    var XHR = JCX.xhr,
-        API = JCX.api;
+    var XHR = Posterior.xhr,
+        API = Posterior.api;
 
     test("API exists", function() {
         ok(XHR);

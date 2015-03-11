@@ -1,4 +1,4 @@
-var XHR = JCX.xhr = function(cfg) {
+var XHR = Posterior.xhr = function(cfg) {
     return XHR.main(cfg);
 },
 htmlClass = D.documentElement.classList;

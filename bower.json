@@ -1,7 +1,7 @@
 {
-  "name": "jcx",
-  "version": "0.7.3",
-  "main": "dist/jcx.js",
+  "name": "posterior",
+  "version": "0.8.0",
+  "main": "dist/posterior.js",
   "description": "Hierarchical configuration of JSON XHR communication for your APIs",
   "keywords": [
     "JSON",
@@ -15,16 +15,16 @@
     "email": "nathan@esha.com",
     "url": "http://www.esha.com/"
   },
-  "homepage": "http://esha.github.io/jcx/",
-  "bugs": "https://github.com/esha/jcx/issues",
+  "homepage": "http://esha.github.io/posterior/",
+  "bugs": "https://github.com/esha/posterior/issues",
   "repository": {
     "type": "git",
-    "url": "https://github.com:esha/jcx.git"
+    "url": "https://github.com:esha/posterior.git"
   },
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://raw.githubusercontent.com/esha/jcx/master/LICENSE"
+      "url": "https://raw.githubusercontent.com/esha/posterior/master/LICENSE"
     },
     {
       "type": "GPL",
@@ -42,7 +42,7 @@
   ],
   "dependencies": {
     "store2": "^2.1.6",
-    "promise-polyfill": "~1.1.4"
+    "promis": "bramstein/promis#~1.0.1"
   },
   "devDependencies": {
     "qunit": "~1.15.0"
