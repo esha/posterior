@@ -1,4 +1,4 @@
-/*! posterior - v0.8.0 - 2015-03-11
+/*! posterior - v0.9.0 - 2015-03-12
 * http://esha.github.io/posterior/
 * Copyright (c) 2015 ESHA Research; Licensed MIT, GPL */
 
@@ -293,7 +293,7 @@ boolean concat means &&
 
 */
 var API = Posterior.api = function(config, name) {
-    var parent = config.extend || null;
+    var parent = config.parent || null;
     if (parent && parent.cfg) {
         parent = parent.cfg;
     }
@@ -315,14 +315,20 @@ API.build = function(config, parent, selfName) {
     }
     for (var name in config) {
         API.set(cfg, name, config[name], selfName);
+        API.getter(fn, name);
     }
 
     fn.cfg = cfg;
     fn.config = API.config;
+    fn.extend = API.extend;
     if (API.get(cfg, 'auto')) {
         setTimeout(fn, 0);
     }
     return fn;
+};
+
+API.extend = function(config, name) {
+    return API.build(config, this.cfg, name);
 };
 
 API.main = function(fn, data) {
@@ -427,6 +433,17 @@ API.get = function(cfg, name, inheriting) {
         return API.combine(API.get(cfg._parent, name, true), value, cfg);
     }
     return value;
+};
+
+API.getter = function(fn, name) {
+    try {
+        Object.defineProperty(fn, name, {
+            get: function() {
+                return API.get(fn.cfg, name);
+            },
+            configurable: true
+        });
+    } catch (e) {}// ignore failures
 };
 
 API.set = function(cfg, name, value, parentName) {
