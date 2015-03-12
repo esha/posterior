@@ -1,4 +1,4 @@
-/*! posterior - v0.9.0 - 2015-03-12
+/*! posterior - v0.9.1 - 2015-03-12
 * http://esha.github.io/posterior/
 * Copyright (c) 2015 ESHA Research; Licensed MIT, GPL */
 
@@ -300,22 +300,23 @@ var API = Posterior.api = function(config, name) {
     return API.build(config, parent, name);
 };
 
-API.build = function(config, parent, selfName) {
+API.build = function(config, parent, name) {
     var fn = function(data) {
         return API.main(fn, data);
     },
     cfg = {
         _fn: fn,
         _parent: parent,
-        _private: {}
+        _private: {},
+        name: name || 'Posterior'
     };
 
     if (config.debug || API.get(cfg, 'debug')) {
-        fn = cfg._fn = API.debug(selfName||'Posterior', fn);
+        fn = cfg._fn = API.debug(cfg.name, fn);
     }
-    for (var name in config) {
-        API.set(cfg, name, config[name], selfName);
-        API.getter(fn, name);
+    for (var prop in config) {
+        API.set(cfg, prop, config[prop], cfg.name);
+        API.getter(fn, prop);
     }
 
     fn.cfg = cfg;

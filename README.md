@@ -21,7 +21,7 @@ Download: [posterior.min.js][full-min] or [posterior.js][full] [![Build Status](
 * 2014-09-19 [v0.5.4][] (XHR tests, json cfg shortcut, better structure, safer copy, responseObject property, et al)
 * 2014-09-24 [v0.6.2][] (s/serialize/transformData, s/preprocess/configure, better debug output)
 * 2014-10-13 [v0.7.3][] (support all XHR events, JSON default, resolve/reject promise with response/error, request/responseData handler support)
-* 2015-03-12 [v0.9.0][] (switch to better Promise polyfill, rename to Posterior, support 'parent' property, expose config props with getters)
+* 2015-03-12 [v0.9.1][] (switch to better Promise polyfill, rename to Posterior, support 'parent' property, expose config props with getters)
 
 [v0.1.4]: https://github.com/esha/posterior/tree/0.1.4
 [v0.2.3]: https://github.com/esha/posterior/tree/0.2.3
@@ -30,4 +30,4 @@ Download: [posterior.min.js][full-min] or [posterior.js][full] [![Build Status](
 [v0.5.4]: https://github.com/esha/posterior/tree/0.5.4
 [v0.6.2]: https://github.com/esha/posterior/tree/0.6.2
 [v0.7.3]: https://github.com/esha/posterior/tree/0.7.3
-[v0.9.0]: https://github.com/esha/posterior/tree/0.9.0
+[v0.9.1]: https://github.com/esha/posterior/tree/0.9.1
