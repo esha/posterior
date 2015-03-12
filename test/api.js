@@ -194,25 +194,48 @@ Test assertions:
     });
 
     test('API.require', function() {
+        expect(3);
         var req = function() {
+            start();
             ok('req', 'executed requires fn');
         };
+        stop();
         API.require('req').then(function() {
             equal('string','string');
-        }).catch(function() {
-            equal('string', 'req');
         });
         API.require(req).then(function() {
             strictEqual('function','function');
-        }).catch(function() {
-            strictEqual('function', req);
         });
     });
 
-    test('\'extend\' property', function() {
+    test('\'parent\' property', function() {
         var base = API({ url: '/base' }, 'base'),
-            sub = API({ url: '/sub', extend: base }, 'sub');
+            sub = API({ url: '/sub', parent: base }, 'sub');
         equal('/base/sub', API.get(sub.cfg, 'url'));
+    });
+
+    test('extend() function', function() {
+        var base = API({ url: '/base' });
+        equal(typeof base.extend, "function");
+        var sub = base.extend({ url: '/sub' });
+        equal('/base/sub', API.get(sub.cfg, 'url'));
+        strictEqual(base.cfg, sub.cfg._parent);
+    });
+
+    test('getters for properties', function() {
+        var base = API({
+                string: 'a',
+                object: { propA: true }
+            }),
+            api = API({
+                string: 'b',
+                object: { propB: true },
+                parent: base
+            });
+        window.getters= api;
+        equal('ab', api.string);
+        ok(api.object.propA);
+        ok(api.object.propB);
     });
 
 }());
