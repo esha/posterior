@@ -232,7 +232,6 @@ Test assertions:
                 object: { propB: true },
                 parent: base
             });
-        window.getters= api;
         equal('ab', api.string);
         ok(api.object.propA);
         ok(api.object.propB);
