@@ -237,4 +237,9 @@ Test assertions:
         ok(api.object.propB);
     });
 
+    test('make name accessible on cfg', function() {
+        var api = API({ foo: true }, 'HasFoo');
+        equal('HasFoo', api.cfg.name);
+    });
+
 }());
