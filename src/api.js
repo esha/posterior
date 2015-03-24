@@ -120,7 +120,9 @@ API.fill = function(string, cfg, data) {
             val = key in cfg ? cfg[key] : '';
         }
         str = str.replace(new RegExp('\\$\\{'+key+'}'), val);
-        delete data[key];
+        if (cfg.consumeData !== false) {
+            delete data[key];
+        }
     }
     return str;
 };

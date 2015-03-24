@@ -177,6 +177,19 @@ Test assertions:
         equal('val', cfg.prop);
     });
 
+    test('API.fill (but w/o consuming data)', function() {
+        var data = {
+            '@a': 'b'
+        },
+        cfg = {
+            consumeData: false,
+            prop: 'val'
+        };
+        equal('b val', API.fill('${@a} ${prop}', cfg, data));
+        equal(true, '@a' in data);
+        equal('val', cfg.prop);
+    });
+
     test('API.process', function() {
         var cfg = {
             url: '/${data}/${cfg}',
