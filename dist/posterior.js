@@ -1,4 +1,4 @@
-/*! posterior - v0.9.1 - 2015-03-12
+/*! posterior - v0.9.2 - 2015-03-24
 * http://esha.github.io/posterior/
 * Copyright (c) 2015 ESHA Research; Licensed MIT, GPL */
 
@@ -393,7 +393,9 @@ API.fill = function(string, cfg, data) {
             val = key in cfg ? cfg[key] : '';
         }
         str = str.replace(new RegExp('\\$\\{'+key+'}'), val);
-        delete data[key];
+        if (cfg.consumeData !== false) {
+            delete data[key];
+        }
     }
     return str;
 };
