@@ -54,7 +54,9 @@ XHR.config = function(xhr, cfg) {
         xhr.setRequestHeader('X-Requested-With', cfg.requestedWith || 'XMLHttpRequest');
     }
     if (cfg.json !== false) {
-        xhr.responseType = 'json';
+        try {
+            xhr.responseType = 'json';// unsupported by phantomjs (webkit)
+        } catch (e) {}
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-Type', 'application/json');
     }
