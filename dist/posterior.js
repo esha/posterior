@@ -1,4 +1,4 @@
-/*! posterior - v0.9.2 - 2015-03-24
+/*! posterior - v0.9.3 - 2015-04-01
 * http://esha.github.io/posterior/
 * Copyright (c) 2015 ESHA Research; Licensed MIT, GPL */
 
@@ -64,7 +64,9 @@ XHR.config = function(xhr, cfg) {
         xhr.setRequestHeader('X-Requested-With', cfg.requestedWith || 'XMLHttpRequest');
     }
     if (cfg.json !== false) {
-        xhr.responseType = 'json';
+        try {
+            xhr.responseType = 'json';// unsupported by phantomjs (webkit)
+        } catch (e) {}
         xhr.setRequestHeader('Accept', 'application/json');
         xhr.setRequestHeader('Content-Type', 'application/json');
     }
