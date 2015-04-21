@@ -73,19 +73,17 @@ API.main = function(fn, data) {
 };
 
 API.require = function(req) {
-    var type = typeof req;
-    if (type === 'string') {
-        try {
-            req = eval(req);
-        } catch (e) {
-            return Promise.reject(new Error('Could not resolve "'+req+'".'));
+    try {
+        if (typeof req === 'string') {
+            req = eval('window.'+req);
         }
+        if (typeof req === 'function') {
+            req = req() || req;
+        }
+        return req ? Promise.resolve(req) : Promise.reject(req);
+    } catch (e) {
+        return Promise.reject(e);
     }
-    if (type === 'function') {
-        var ret = req();
-        return Promise.resolve(ret === undefined ? req : ret);
-    }
-    return req ? Promise.resolve(req) : Promise.reject(req);
 };
 
 API.config = function(name, value) {

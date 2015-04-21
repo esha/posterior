@@ -30,10 +30,10 @@ Test assertions:
         ok(API.build);
         var config = {},
             fn = API.build(config);
-        equal(typeof fn, 'function');
-        ok(fn.cfg);
-        ok(fn.cfg._private);
-        equal(fn.cfg._fn, fn);
+        equal(typeof fn, 'function', 'should return a function');
+        ok(fn.cfg, 'should have .cfg');
+        ok(fn.cfg._private, '.cfg should have ._private');
+        equal(fn.cfg._fn, fn, '.cfg should have ._fn');
     });
 
     test('API.type', function() {
@@ -53,7 +53,7 @@ Test assertions:
         var a = {a:true},
             b = {b:false},
             c = API.combine(a, b);
-        deepEqual({a:true,b:false}, c);
+        deepEqual({a:true,b:false}, c, 'check deep equality of combined object');
     });
 
     test('API.combineFn', function() {
@@ -148,7 +148,7 @@ Test assertions:
 
     test('API.get', function() {
         equal(API.get(cfg, 'priv'), 'ateer');
-        equal(API.get(cfg, 'un'), undefined);
+        equal(API.get(cfg, 'un'), undefined, 'API.get(cfg, "un")');
         equal(API.get(cfg._parent, 'norm'), 'at');
         equal(API.get(cfg, 'norm'), 'ative');
         equal(API.get(cfg, 'over'), 'ride');
@@ -172,9 +172,9 @@ Test assertions:
         cfg = {
             prop: 'val'
         };
-        equal('b val', API.fill('${@a} ${prop}', cfg, data));
-        equal(false, '@a' in data);
-        equal('val', cfg.prop);
+        equal('b val', API.fill('${@a} ${prop}', cfg, data), 'API.fill test');
+        equal(false, '@a' in data, '@a in data test');
+        equal('val', cfg.prop, 'cfg.prop test');
     });
 
     test('API.fill (but w/o consuming data)', function() {
@@ -185,9 +185,9 @@ Test assertions:
             consumeData: false,
             prop: 'val'
         };
-        equal('b val', API.fill('${@a} ${prop}', cfg, data));
-        equal(true, '@a' in data);
-        equal('val', cfg.prop);
+        equal('b val', API.fill('${@a} ${prop}', cfg, data), 'API.fill');
+        equal(true, '@a' in data, 'should be @a in data');
+        equal('val', cfg.prop, 'cfg.prop should be "val"');
     });
 
     test('API.process', function() {
@@ -201,23 +201,51 @@ Test assertions:
         };
         API.process(cfg);
         var data = cfg.data;
-        strictEqual(cfg.url, '/data/cfg');
-        strictEqual(data.bar, undefined);
-        strictEqual(data.value, true);
+        strictEqual(cfg.url, '/data/cfg', 'cfg.url check');
+        strictEqual(data.bar, undefined, 'data.bar check');
+        strictEqual(data.value, true, 'data.value check');
     });
 
     test('API.require', function() {
-        expect(3);
-        var req = function() {
-            start();
-            ok('req', 'executed requires fn');
-        };
+        var count = 0,
+            fromString = false,
+            fromFunction = false,
+            counter = window.counter = function(){ count++; };
         stop();
-        API.require('req').then(function() {
-            equal('string','string');
+
+        API.require('counter').then(function() {
+            fromString = true;
+            API.require(counter).then(function() {
+                fromFunction = true;
+                delete window.counter;
+                start();
+                ok(fromString, 'from string');
+                ok(fromFunction, 'from function');
+                equal(count, 2, 'counter should have run twice');
+            });
         });
-        API.require(req).then(function() {
-            strictEqual('function','function');
+    });
+
+    test('API.require fail/catch', function() {
+        var count = 0,
+            fromString = false,
+            fromFunction = false,
+            failCounter = window.failCounter = function() {
+                count++;
+                throw new Error('catch me if you can!');
+            };
+        stop();
+
+        API.require('failCounter').catch(function() {
+            fromString = true;
+            API.require(failCounter).catch(function() {
+                fromFunction = true;
+                delete window.failCounter;
+                start();
+                ok(fromString, 'from string');
+                ok(fromFunction, 'from function');
+                equal(count, 2, 'counter should have run twice');
+            });
         });
     });
 
