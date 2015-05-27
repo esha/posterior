@@ -283,4 +283,39 @@ Test assertions:
         equal('HasFoo', api.cfg.name);
     });
 
+    test('API.main', function() {
+        expect(5);
+        var XHR = Posterior.xhr,
+            XHRmain = XHR.main;
+
+        // this is to allow synchronous resolution of tests
+        function FakeResolvedPromise(value) {
+            this.value = value;
+        }
+        FakeResolvedPromise.prototype.then = function(fn) {
+            var val = fn(this.value, true);
+            return new FakeResolvedPromise(val);
+        };
+
+        XHR.main = function(cfg) {
+            XHR.main = XHRmain;
+            equal(cfg.url, "./index.html", 'called fake main');
+            return new FakeResolvedPromise({faked:true});
+        };
+
+        var backend = new Posterior({ shareResult: true, url: './index.html' });
+        backend().then(function(result, fake) {
+            ok(fake, "is fake promise");
+            ok(result.faked, "got faked result");
+        });
+
+        // ok this should next use a real resolved promise
+        stop();
+        backend().then(function(result, fake) {
+            start();
+            ok(!fake, "isn't a fake promise");
+            ok(result.faked, "still get faked result");
+        });
+    });
+
 }());

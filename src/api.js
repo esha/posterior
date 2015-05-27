@@ -60,16 +60,24 @@ API.extend = function(config, name) {
 };
 
 API.main = function(fn, data) {
+    if (fn.cfg.sharedResult) {
+        return Promise.resolve(fn.cfg.sharedResult);
+    }
     var cfg = API.getAll(fn.cfg);
     cfg.data = data;
     API.process(cfg, data);
-    var deps = cfg.requires;
-    if (deps) {
-        return Promise.all(deps.map(API.require.bind(cfg))).then(function() {
-            return XHR(cfg);
+    var deps = cfg.requires,
+        promise = deps ?
+            Promise.all(deps.map(API.require.bind(cfg))).then(function() {
+                return XHR(cfg);
+            }) :
+            XHR(cfg);
+    if (cfg.shareResult) {
+        promise.then(function(result) {
+            fn.cfg.sharedResult = result;
         });
     }
-    return XHR(cfg);
+    return promise;
 };
 
 API.require = function(req) {
