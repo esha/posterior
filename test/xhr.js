@@ -108,7 +108,7 @@ Test assertions:
             start();
             ok(!e, e);
         });
-        delete XHR.ctor;
+        XHR.ctor = XMLHttpRequest;
     });
 
     test('XHR.config', function() {
@@ -292,6 +292,47 @@ Test assertions:
         XHR.forceJSONResponse(xhr);
         deepEqual(xhr.response, {foo:true});
         strictEqual(xhr.responseObject, xhr.response);
+    });
+
+    test("XHR caching", function() {
+        expect(5);
+
+        // setup
+        var subsequentCall = false,
+        cfg = {
+            cache: true,
+            url: 'cache-test',
+            then: function() {
+                if (subsequentCall) {
+                    start();
+                }
+                ok(true, 'running then');
+            }
+        },
+        XHRpromise = XHR.promise;
+        XHR.promise = function() {
+            // return fake resolved promise that's synchronous
+            return {
+                then: function(fn) {
+                    XHR.promise = XHRpromise;
+                    ok(true, 'once for cfg.then, once for cfg.cache');
+                    fn();
+                    return this;
+                }
+            };
+        };
+
+        // first call
+        XHR.main(cfg);
+        ok(store.has(XHR.key(cfg)), "xhr cached in localStorage");
+
+        // this should trigger only one more assertion, not two
+        subsequentCall = true;
+        stop();
+        XHR.main(cfg);
+
+        // clean up
+        store.remove(XHR.key(cfg));
     });
 
 }());
