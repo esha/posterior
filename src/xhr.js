@@ -21,6 +21,11 @@ XHR.main = function(cfg) {
         if (cfg.retry) {
             promise = promise.catch(XHR.retry.bind(xhr));
         }
+        if (cfg.cache) {
+            promise.then(function() {
+                XHR.cache(xhr);
+            });
+        }
     }
     if (cfg.then) {
         promise = promise.then(cfg.then);
@@ -119,9 +124,6 @@ XHR.load = function(xhr, cfg, resolve, reject) {
             if (status >= 200 && status < 300) {
                 if (cfg.json !== false && typeof xhr.response !== "object") {
                     XHR.forceJSONResponse(xhr);
-                }
-                if (cfg.cache) {
-                    XHR.cache(xhr);
                 }
                 var data = xhr.responseType ? xhr.response :
                            cfg.json !== false ? xhr.responseObject :
