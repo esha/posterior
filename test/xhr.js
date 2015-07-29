@@ -31,7 +31,9 @@ Test assertions:
 
     function FakeXHR() {
         this._headers = {};
+        this.id = ++FakeXHR._id;
     }
+    FakeXHR._id = 0;
     FakeXHR.prototype.timeout = null;
     FakeXHR.prototype.open = function(method, url, async, user, pass) {
         this._method = method;
@@ -46,6 +48,13 @@ Test assertions:
             fn = API.combineFn(this[event], fn);
         }
         this[event] = fn;
+    };
+    FakeXHR.prototype.getAllResponseHeaders = function() {
+        var all = '';
+        for (var header in this._headers) {
+            all += header + ': ' + this._headers[header] + '\n';
+        }
+        return all;
     };
     FakeXHR.prototype.overrideMimeType = function(type) {
         this._mimeType = type;
@@ -65,6 +74,17 @@ Test assertions:
             case 'timeout':
                 if (this.ontimeout) {
                     this.ontimeout(data);
+                }
+            break;
+            case 'retry':
+                if (FakeXHR.retries) {
+                    FakeXHR.retries -= 1;
+                    this.status = 405;
+                    this.onerror(data);
+                } else {
+                    this.status = 200;
+                    this.responseText = this.cfg.response || 'retried';
+                    this.onload();
                 }
             break;
             default:
@@ -333,6 +353,40 @@ Test assertions:
 
         // clean up
         store.remove(XHR.key(cfg));
+    });
+
+    test('XHR retry', function() {
+        expect(10);
+        XHR.ctor = FakeXHR;
+        FakeXHR.retries = 3;
+        var fails = 0,
+            actualSetTimeout = window.setTimeout,
+            expectedWaits = [8000, 4000, 2000];
+        // async testing is tangential, force sync behavior
+        window.setTimeout = function(fn, wait) {
+            //NOTE: if/else exists only to workaround PhantomJS mysterious setTimeout call during this test
+            if (wait > 0) {
+                equal(wait, expectedWaits.pop(), "should have increasing wait time");
+                fn();
+            } else {
+                actualSetTimeout(fn, wait);
+            }
+        };
+        XHR({
+            url: '/fake',
+            retry: true,
+            data: 'retry',// tells FakeXHR to fail until retries are over
+            error: function(err) {
+                equal(err, 'retry');
+                equal(FakeXHR.retries, 2-fails, "should be "+(2-fails)+" retries left");
+                fails++;
+            },
+            load: function() {
+                equal(this.responseText, 'retried');
+            }
+        });
+        XHR.ctor = XMLHttpRequest;
+        window.setTimeout = actualSetTimeout;
     });
 
 }());

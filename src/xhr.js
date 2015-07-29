@@ -18,9 +18,6 @@ XHR.main = function(cfg) {
         xhr = new XHR.ctor();
         XHR.config(xhr, cfg);
         promise = XHR.promise(xhr, cfg);
-        if (cfg.retry) {
-            promise = promise.catch(XHR.retry.bind(xhr));
-        }
         if (cfg.cache) {
             promise.then(function() {
                 XHR.cache(xhr);
@@ -43,13 +40,14 @@ XHR.config = function(xhr, cfg) {
              'async' in cfg ? cfg.async : true,
              cfg.username, cfg.password);
     xhr.cfg = cfg;
+    cfg.xhr = xhr;
     for (var prop in cfg) {
         var value = cfg[prop];
         if (prop in xhr) {
             xhr[prop] = value;
         }
         if (typeof value === "function") {
-            xhr.addEventListener(prop, cfg[prop] = value.bind(xhr));
+            xhr.addEventListener(prop, value.bind(xhr));
         }
     }
     if (cfg.mimeType) {
@@ -92,32 +90,56 @@ XHR.url = function(cfg) {
 XHR.promise = function(xhr, cfg) {
     return new Promise(function(resolve, reject) {
         var fail = function(e) {
-            reject(xhr.error = e);
+            if (cfg.retry) {
+                XHR.retry(cfg, cfg.retry, events, fail);
+            } else {
+                reject(xhr.error = e);
+            }
         },
         events = {
             error: fail,
             timeout: fail,
             loadstart: XHR.start,
             loadend: XHR.end,
-            load: XHR.load(xhr, cfg, resolve, fail)
+            load: XHR.load(cfg, resolve, fail)
         };
-        for (var event in events) {
-            xhr.addEventListener(event, events[event]);
-        }
-
-        try {
-            xhr.send(XHR.data(cfg));
-        } catch (e) {
-            fail(e);
-        }
+        XHR.run(xhr, cfg, events, fail);
     });
 };
 
-XHR.load = function(xhr, cfg, resolve, reject) {
+XHR.retry = function(cfg, retry, events, fail) {
+    if (typeof retry !== 'object') {
+        retry = cfg.retry = {};
+    }
+    retry.wait = 'wait' in retry ? retry.wait : 1000;
+    retry.limit = 'limit' in retry ? retry.limit : 3;
+    retry.count = 'count' in retry ? retry.count : 0;
+    if (retry.limit > retry.count++) {
+        setTimeout(function retryAfterWait() {
+            var xhr = new XHR.ctor();
+            XHR.config(xhr, cfg);
+            XHR.run(xhr, cfg, events, fail);
+        }, retry.wait *= 2);
+    }
+};
+
+XHR.run = function(xhr, cfg, events, fail) {
+    for (var event in events) {
+        xhr.addEventListener(event, events[event]);
+    }
+    try {
+        xhr.send(XHR.data(cfg));
+    } catch (e) {
+        fail(e);
+    }
+};
+
+XHR.load = function(cfg, resolve, reject) {
     return function() {
         try {
             // cfg status code handling (e.g. {0: 200} for file://)
-            var status = cfg[xhr.status] || xhr.status;
+            var xhr = cfg.xhr,
+                status = cfg[xhr.status] || xhr.status;
             if (typeof status === "function") {
                 status = status(xhr) || xhr.status;
             }
@@ -129,7 +151,7 @@ XHR.load = function(xhr, cfg, resolve, reject) {
                            cfg.json !== false ? xhr.responseObject :
                            xhr.responseText;
                 if (cfg.responseData && XHR.isData(data)) {
-                    var ret = cfg.responseData(data);
+                    var ret = cfg.responseData.call(xhr, data);
                     data = ret === undefined ? data : ret;
                 }
                 resolve(XHR.isData(data) ? data : xhr);
@@ -245,22 +267,4 @@ XHR.safeCopy = function(object, copied) {
         }
         return copy;
     }
-};
-
-XHR.retry = function(e) {
-    var xhr = this,
-        retry = xhr.cfg.retry;
-    if ((retry.limit || 3) > retry.count) {
-        if (typeof retry === 'number') {
-            retry = { wait: retry };
-        }
-        return new Promise(function(resolve) {
-            setTimeout(function() {
-                retry.count = (retry.count || 0) + 1;
-                retry.wait = (retry.wait || 1000) * 2;
-                resolve(XHR(xhr.cfg));
-            }, retry.wait || 1000);
-        });
-    }
-    return Promise.reject(e);
 };
