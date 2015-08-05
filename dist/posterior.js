@@ -1,4 +1,4 @@
-/*! posterior - v0.10.1 - 2015-07-28
+/*! posterior - v0.11.0 - 2015-08-05
 * http://esha.github.io/posterior/
 * Copyright (c) 2015 ESHA Research; Licensed MIT, GPL */
 
@@ -399,14 +399,14 @@ API.fill = function(string, cfg, data) {
     data = data || {};
     var key,
         str = string,
-        re = /\$\{([^}]+)\}/g;
+        re = /\$?\{([^}]+)\}/g;
     while ((key = re.exec(string))) {
         key = key[1];
         var val = data[key];
         if (val === null || val === undefined) {
             val = key in cfg ? cfg[key] : '';
         }
-        str = str.replace(new RegExp('\\$\\{'+key+'}'), val);
+        str = str.replace(new RegExp('\\$?\\{'+key+'}'), val);
         if (cfg.consumeData !== false) {
             delete data[key];
         }
