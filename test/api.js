@@ -172,7 +172,7 @@ Test assertions:
         cfg = {
             prop: 'val'
         };
-        equal('b val', API.fill('${@a} ${prop}', cfg, data), 'API.fill test');
+        equal('b val', API.fill('${@a} {prop}', cfg, data), 'API.fill test');
         equal(false, '@a' in data, '@a in data test');
         equal('val', cfg.prop, 'cfg.prop test');
     });
@@ -185,14 +185,14 @@ Test assertions:
             consumeData: false,
             prop: 'val'
         };
-        equal('b val', API.fill('${@a} ${prop}', cfg, data), 'API.fill');
+        equal('b val', API.fill('{@a} ${prop}', cfg, data), 'API.fill');
         equal(true, '@a' in data, 'should be @a in data');
         equal('val', cfg.prop, 'cfg.prop should be "val"');
     });
 
     test('API.process', function() {
         var cfg = {
-            url: '/${data}/${cfg}',
+            url: '/${data}/{cfg}',
             cfg: 'cfg',
             data: {
                 data: 'data',

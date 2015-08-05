@@ -118,14 +118,14 @@ API.fill = function(string, cfg, data) {
     data = data || {};
     var key,
         str = string,
-        re = /\$\{([^}]+)\}/g;
+        re = /\$?\{([^}]+)\}/g;
     while ((key = re.exec(string))) {
         key = key[1];
         var val = data[key];
         if (val === null || val === undefined) {
             val = key in cfg ? cfg[key] : '';
         }
-        str = str.replace(new RegExp('\\$\\{'+key+'}'), val);
+        str = str.replace(new RegExp('\\$?\\{'+key+'}'), val);
         if (cfg.consumeData !== false) {
             delete data[key];
         }
