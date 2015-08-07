@@ -98,7 +98,7 @@ API.follow = function(cfg, fn) {
         }
         if (leader) {
             return leader().then(function following(resource) {
-                cfg.url = eval('resource.'+cfg.follows) || resource;
+                cfg.url = eval('resource.'+follows) || resource;
                 return XHR(cfg);
             });
         } else {
