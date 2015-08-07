@@ -63,21 +63,50 @@ API.main = function(fn, data) {
     if (fn.cfg.sharedResult) {
         return Promise.resolve(fn.cfg.sharedResult);
     }
+
     var cfg = API.getAll(fn.cfg);
     cfg.data = data;
     API.process(cfg, data);
-    var deps = cfg.requires,
-        promise = deps ?
-            Promise.all(deps.map(API.require.bind(cfg))).then(function() {
-                return XHR(cfg);
-            }) :
-            XHR(cfg);
+    var promise = API.promise(cfg, fn);
+
     if (cfg.shareResult) {
         promise.then(function(result) {
             fn.cfg.sharedResult = result;
         });
     }
     return promise;
+};
+
+API.promise = function(cfg, fn) {
+    var deps = cfg.requires;
+    return deps ?
+        Promise.all(deps.map(API.require.bind(cfg))).then(function() {
+            return API.follow(cfg, fn);
+        }) :
+        API.follow(cfg, fn);
+};
+
+API.follow = function(cfg, fn) {
+    if (cfg.follows) {
+        var follows = cfg.follows,
+            leader;
+        if (typeof follows === "object") {
+            leader = follows.source;
+            follows = follows.path;
+        } else {
+            leader = fn.cfg._parent._fn;
+        }
+        if (leader) {
+            return leader().then(function following(resource) {
+                cfg.url = eval('resource.'+cfg.follows) || resource;
+                return XHR(cfg);
+            });
+        } else {
+            return Promise.reject("Cannot follow link relation without a parent function.");
+        }
+    } else {
+        return XHR(cfg);
+    }
 };
 
 API.require = function(req) {
