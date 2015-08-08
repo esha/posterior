@@ -60,8 +60,8 @@ API.extend = function(config, name) {
 };
 
 API.main = function(fn, data) {
-    if (fn.cfg.sharedResult) {
-        return Promise.resolve(fn.cfg.sharedResult);
+    if (fn.cfg.savedResult) {
+        return Promise.resolve(fn.cfg.savedResult);
     }
 
     var cfg = API.getAll(fn.cfg);
@@ -69,9 +69,9 @@ API.main = function(fn, data) {
     API.process(cfg, data);
     var promise = API.promise(cfg, fn);
 
-    if (cfg.shareResult) {
+    if (cfg.saveResult) {
         promise.then(function(result) {
-            fn.cfg.sharedResult = result;
+            fn.cfg.savedResult = result;
         });
     }
     return promise;

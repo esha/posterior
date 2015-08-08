@@ -303,7 +303,7 @@ Test assertions:
             return new FakeResolvedPromise({faked:true});
         };
 
-        var backend = new Posterior({ shareResult: true, url: './index.html' });
+        var backend = new Posterior({ saveResult: true, url: './index.html' });
         backend().then(function(result, fake) {
             ok(fake, "is fake promise");
             ok(result.faked, "got faked result");
