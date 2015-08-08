@@ -93,12 +93,13 @@ API.follow = function(cfg, fn) {
         if (typeof follows === "object") {
             leader = follows.source;
             follows = follows.path;
-        } else {
+        }
+        if (!leader) {
             leader = fn.cfg._parent._fn;
         }
         if (leader) {
             return leader().then(function following(resource) {
-                cfg.url = eval('resource.'+follows) || resource;
+                cfg.url = follows && eval('resource.'+follows) || resource;
                 return XHR(cfg);
             });
         } else {
