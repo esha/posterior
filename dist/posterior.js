@@ -1,4 +1,4 @@
-/*! posterior - v0.11.0 - 2015-08-05
+/*! posterior - v0.12.0 - 2015-08-08
 * http://esha.github.io/posterior/
 * Copyright (c) 2015 ESHA Research; Licensed MIT, GPL */
 
@@ -341,24 +341,54 @@ API.extend = function(config, name) {
 };
 
 API.main = function(fn, data) {
-    if (fn.cfg.sharedResult) {
-        return Promise.resolve(fn.cfg.sharedResult);
+    if (fn.cfg.savedResult) {
+        return Promise.resolve(fn.cfg.savedResult);
     }
+
     var cfg = API.getAll(fn.cfg);
     cfg.data = data;
     API.process(cfg, data);
-    var deps = cfg.requires,
-        promise = deps ?
-            Promise.all(deps.map(API.require.bind(cfg))).then(function() {
-                return XHR(cfg);
-            }) :
-            XHR(cfg);
-    if (cfg.shareResult) {
+    var promise = API.promise(cfg, fn);
+
+    if (cfg.saveResult) {
         promise.then(function(result) {
-            fn.cfg.sharedResult = result;
+            fn.cfg.savedResult = result;
         });
     }
     return promise;
+};
+
+API.promise = function(cfg, fn) {
+    var deps = cfg.requires;
+    return deps ?
+        Promise.all(deps.map(API.require.bind(cfg))).then(function() {
+            return API.follow(cfg, fn);
+        }) :
+        API.follow(cfg, fn);
+};
+
+API.follow = function(cfg, fn) {
+    if (cfg.follows) {
+        var follows = cfg.follows,
+            leader;
+        if (typeof follows === "object") {
+            leader = follows.source;
+            follows = follows.path;
+        }
+        if (!leader) {
+            leader = fn.cfg._parent._fn;
+        }
+        if (leader) {
+            return leader().then(function following(resource) {
+                cfg.url = follows && eval('resource.'+follows) || resource;
+                return XHR(cfg);
+            });
+        } else {
+            return Promise.reject("Cannot follow link relation without a parent function.");
+        }
+    } else {
+        return XHR(cfg);
+    }
 };
 
 API.require = function(req) {

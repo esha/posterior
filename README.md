@@ -24,6 +24,7 @@ Download: [posterior.min.js][full-min] or [posterior.js][full] [![Build Status](
 * 2015-03-12 [v0.9.3][] (switch to better Promise polyfill, rename to Posterior, support 'parent' property, expose config props with getters)
 * 2015-07-28 [v0.10.1][] (fix retry, cache, and require features)
 * 2015-08-05 [v0.11.0][] (support both ${key} and {key} in URL templates)
+* 2015-08-08 [v0.12.0][] (s/share(d)Result/save(d)Result, and support dynamic link relations via new 'follows' property)
 
 [v0.1.4]: https://github.com/esha/posterior/tree/0.1.4
 [v0.2.3]: https://github.com/esha/posterior/tree/0.2.3
@@ -35,3 +36,4 @@ Download: [posterior.min.js][full-min] or [posterior.js][full] [![Build Status](
 [v0.9.3]: https://github.com/esha/posterior/tree/0.9.3
 [v0.10.1]: https://github.com/esha/posterior/tree/0.10.1
 [v0.11.0]: https://github.com/esha/posterior/tree/0.11.0
+[v0.12.0]: https://github.com/esha/posterior/tree/0.12.0
