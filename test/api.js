@@ -318,4 +318,55 @@ Test assertions:
         });
     });
 
+    test('API.follows', function() {
+        expect(5);// 2 calls to fake XHR.main, 2 calls to source fn
+
+        // fake XHR.main and promises to allow synchronous resolution
+        var XHR = Posterior.xhr,
+            XHRmain = XHR.main;
+
+        function FakeResolvedPromise(value) {
+            this.value = value;
+        }
+        FakeResolvedPromise.prototype.then = function(fn) {
+            var val = fn(this.value, true);
+            return new FakeResolvedPromise(val);
+        };
+
+        XHR.main = function(cfg) {
+            equal(cfg.url, "/related/type", 'got link relation as URL');
+        };
+        var service = function() {
+            ok(true, 'called service fn');
+            return new FakeResolvedPromise({ _links: { type: { href: '/related/type' }}});
+        };
+
+        // test non-heirarchical source
+        API.follow({
+            follows: {
+                source: service,
+                path: '_links.type.href'
+            }
+        });
+
+        // test heirarchical source
+        API.follow({
+            follows: '_links.type.href'
+        }, {
+            cfg:{ _parent:{ _fn: service }}
+        });
+
+        // test direct URL result
+        API.follow({
+            follows: {
+                source: function() {
+                    return new FakeResolvedPromise("/related/type");
+                }
+            }
+        });
+
+        // restore proper main function
+        XHR.main = XHRmain;
+    });
+
 }());
