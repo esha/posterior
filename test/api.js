@@ -165,19 +165,26 @@ Test assertions:
         });
     });
 
-    test('API.fill', function() {
+    test('API.resolve', function() {
         var data = {
-            '@a': 'b'
+            '@a': 'b',
+            deep: {
+                nest: [2]
+            }
         },
         cfg = {
             prop: 'val'
         };
-        equal('b val', API.fill('${@a} {prop}', cfg, data), 'API.fill test');
-        equal(false, '@a' in data, '@a in data test');
-        equal('val', cfg.prop, 'cfg.prop test');
+        equal('b val', API.resolve('${@a} {prop}', cfg, data), 'API.resolve test');
+        equal(false, '@a' in data, '@a should not be in data');
+        equal('val', cfg.prop, 'cfg.prop should not be consumed');
+
+        var deep = API.resolve('/{deep.nest[0]}', cfg, data);
+        equal(deep, '/2', 'should use eval to resolve key');
+        equal(data.deep.nest[0], 2, 'should not consume eval\'d data');
     });
 
-    test('API.fill (but w/o consuming data)', function() {
+    test('API.resolve (but w/o consuming data)', function() {
         var data = {
             '@a': 'b'
         },
@@ -185,9 +192,35 @@ Test assertions:
             consumeData: false,
             prop: 'val'
         };
-        equal('b val', API.fill('{@a} ${prop}', cfg, data), 'API.fill');
+        equal('b val', API.resolve('{@a} ${prop}', cfg, data), 'API.resolve');
         equal(true, '@a' in data, 'should be @a in data');
         equal('val', cfg.prop, 'cfg.prop should be "val"');
+    });
+
+    test('API.resolve (from arguments)', function() {
+        expect(4);
+
+        var data = ['arg1', 'arg2'],
+            filled = API.resolve('/{1}/{0}/', {}, data);
+        equal(filled, '/arg2/arg1/', 'should be filled with arguments');
+        equal(data.length, 2, 'data should not be consumed from arrays');
+
+        // test it all the way from the top
+        var APIpromise = API.promise;
+        API.promise = function(cfg) {
+            equal(cfg.url, '/uno/dos', 'should be filled properly');
+        };
+        var backend = new Posterior({
+            url: '/${0}/${1}'
+        });
+        backend('uno', 'dos');
+
+        API.promise = function(cfg) {
+            equal(cfg.url, '/uno/', 'should be filled properly');
+        };
+        backend('uno');
+
+        API.promise = APIpromise;
     });
 
     test('API.process', function() {

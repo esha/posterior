@@ -28,8 +28,8 @@ var API = Posterior.api = function(config, name) {
 };
 
 API.build = function(config, parent, name) {
-    var fn = function(data) {
-        return API.main(fn, data);
+    var fn = function() {
+        return API.main(fn, arguments);
     },
     cfg = {
         _fn: fn,
@@ -59,14 +59,17 @@ API.extend = function(config, name) {
     return API.build(config, this.cfg, name);
 };
 
-API.main = function(fn, data) {
+API.main = function(fn, args) {
     if (fn.cfg.savedResult) {
         return Promise.resolve(fn.cfg.savedResult);
     }
 
     var cfg = API.getAll(fn.cfg);
-    cfg.data = data;
-    API.process(cfg, data);
+    // data must be an object or array
+    cfg.data = (args.length > 1 || typeof args[0] !== "object") ?
+        Array.prototype.slice.call(args) :
+        args[0];
+    API.process(cfg);
     var promise = API.promise(cfg, fn);
 
     if (cfg.saveResult) {
@@ -139,26 +142,37 @@ API.process = function(cfg) {
     for (var name in cfg) {
         var value = cfg[name];
         if (typeof value === 'string') {
-            value = cfg[name] = API.fill(value, cfg, cfg.data);
+            value = cfg[name] = API.resolve(value, cfg, cfg.data);
         }
     }
 };
 
-API.fill = function(string, cfg, data) {
-    data = data || {};
+API.resolve = function(string, cfg, data) {
     var key,
         str = string,
         re = /\$?\{([^}]+)\}/g;
     while ((key = re.exec(string))) {
         key = key[1];
-        var val = data[key];
+        var val = null;
+        if (key in data) {
+            val = data[key];
+            if (cfg.consumeData !== false && !Array.isArray(data)) {
+                delete data[key];
+            }
+        } else {
+            try {
+                val = eval('data.'+key);
+                // escape key for replace call at end
+                key = key.replace(/(\[|\.)/g, '\\$1');
+            } catch (e) {}
+            if (val === undefined && key in cfg) {
+                val = cfg[key];
+            }
+        }
         if (val === null || val === undefined) {
-            val = key in cfg ? cfg[key] : '';
+            val = '';
         }
         str = str.replace(new RegExp('\\$?\\{'+key+'}'), val);
-        if (cfg.consumeData !== false) {
-            delete data[key];
-        }
     }
     return str;
 };
