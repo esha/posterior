@@ -2,7 +2,7 @@
   "name": "posterior",
   "title": "Posterior",
   "description": "Hierarchical configuration of JSON XHR communication for your APIs",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "homepage": "http://esha.github.io/posterior/",
   "author": {
     "name": "ESHA Research",

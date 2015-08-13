@@ -1,4 +1,37 @@
-[Posterior][home] Gives your backend services intuitive front-end interfaces (uses XHR, JSON, Promise) via straightforward, hierarchical, extensible configurations.
+[Posterior][home] Give your backend services intuitive front-end interfaces (uses XHR, JSON, Promise) via declarative, hierarchical, extensible configurations.
+
+### Basic Examples
+```javascript
+var JSONTest = new Posterior({
+    url: 'https://ip.jsontest.com',
+    then: function(jsonObject) {
+        return jsonObject.ip;
+    }
+});
+
+JSONTest().then(function(ip) {
+    console.log('IP is '+ip);
+}).catch(function(error) {
+    console.error('JSONTest error: ', error);
+});
+```
+
+```javascript
+var GitHub = new Posterior({
+    url: 'https://api.github.com/',
+
+    '@ESHA': {
+        url: '/repos/esha/{0}',
+    }
+});
+
+GitHub.ESHA('posterior').then(function(posterior) {
+    console.log(posterior);
+});
+
+```
+
+
 
 [home]: http://esha.github.io/posterior
 
@@ -25,6 +58,7 @@ Download: [posterior.min.js][full-min] or [posterior.js][full] [![Build Status](
 * 2015-07-28 [v0.10.1][] (fix retry, cache, and require features)
 * 2015-08-05 [v0.11.0][] (support both ${key} and {key} in URL templates)
 * 2015-08-08 [v0.12.0][] (s/share(d)Result/save(d)Result, and support dynamic link relations via new 'follows' property)
+* 2015-08-13 [v0.13.0][] (upgrade config string filling to also resolve args by index and nested data)
 
 [v0.1.4]: https://github.com/esha/posterior/tree/0.1.4
 [v0.2.3]: https://github.com/esha/posterior/tree/0.2.3
@@ -37,3 +71,4 @@ Download: [posterior.min.js][full-min] or [posterior.js][full] [![Build Status](
 [v0.10.1]: https://github.com/esha/posterior/tree/0.10.1
 [v0.11.0]: https://github.com/esha/posterior/tree/0.11.0
 [v0.12.0]: https://github.com/esha/posterior/tree/0.12.0
+[v0.13.0]: https://github.com/esha/posterior/tree/0.13.0
