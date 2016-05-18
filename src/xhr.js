@@ -28,7 +28,10 @@ XHR.main = function(cfg) {
         promise = promise.then(cfg.then);
     }
     if (cfg.catch) {
-        promise = promise.catch(cfg.catch);
+        // call catch with cfg as context and xhr as second arg
+        promise = promise.catch(function caught(error) {
+            return cfg.catch.call(cfg, error, xhr);
+        });
     }
     promise.xhr = xhr;
     return promise;
