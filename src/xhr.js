@@ -164,7 +164,13 @@ XHR.load = function(cfg, resolve, reject) {
                 }
                 resolve(XHR.isData(data) ? data : xhr);
             } else {
-                reject(status);
+                var error;
+                if (status >= 400 && cfg.clientError) {
+                    error = cfg.clientError(status, xhr);
+                } else if (status >= 500 && cfg.serverError) {
+                    error = cfg.serverError(status, xhr);
+                }
+                reject(error || status);
             }
         } catch (e) {
             reject(e);

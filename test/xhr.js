@@ -68,8 +68,18 @@ Test assertions:
         }
         switch (data) {
             case 'error':
-                this.status = 500;
+                this.status = 0;
                 this.onerror(data);
+            break;
+            case 'clienterror':
+                this.status = 404;
+                this.responseText = "Not found";
+                this.onload();
+            break;
+            case 'servererror':
+                this.status = 500;
+                this.responseText = "Internal server error";
+                this.onload();
             break;
             case 'timeout':
                 if (this.ontimeout) {
@@ -190,7 +200,7 @@ Test assertions:
         strictEqual(xhr._headers['Content-Type'], testType);
     });
 
-    test('XHR.promise - part 1', function() {
+    test('XHR.promise - success', function() {
         var xhr = new FakeXHR(),
             cfg = {
                 data: { test: true }
@@ -207,7 +217,7 @@ Test assertions:
         });
     });
 
-    test('XHR.promise - part 2', function() {
+    test('XHR.promise - network error', function() {
         var xhr = new FakeXHR(),
             cfg = {
                 data: 'error'
@@ -217,13 +227,13 @@ Test assertions:
         stop();
         promise.catch(function(fake) {
             start();
-            equal(xhr.status, 500);
+            ok(!xhr.status);
             equal(xhr.error, 'error');
             equal(fake, 'error');
         });
     });
 
-    test('XHR.promise - part 3', function() {
+    test('XHR.promise - network timeout', function() {
         var xhr = new FakeXHR(),
             cfg = {
                 data: 'timeout',
@@ -236,6 +246,50 @@ Test assertions:
             start();
             ok(!xhr.status);
             equal(fake, 'timeout');
+        });
+    });
+
+    test('XHR.promise - client error', function() {
+        var xhr = new FakeXHR(),
+            cfg = {
+                data: 'clienterror',
+                clientError: function(status, _xhr) {
+                    strictEqual(xhr, _xhr);
+                    strictEqual(this, cfg);
+                    equal(status, xhr.status);
+                    return 'handled';
+                }
+            };
+        XHR.config(xhr, cfg);
+        var promise = XHR.promise(xhr, cfg);
+        stop();
+        promise.catch(function(fake) {
+            start();
+            equal(xhr.status, 404);
+            equal(xhr.responseText, 'Not found');
+            equal(fake, 'handled');
+        });
+    });
+
+    test('XHR.promise - server error', function() {
+        var xhr = new FakeXHR(),
+            cfg = {
+                data: 'servererror',
+                serverError: function(status, _xhr) {
+                    strictEqual(xhr, _xhr);
+                    strictEqual(this, cfg);
+                    equal(status, xhr.status);
+                    return 'handled';
+                }
+            };
+        XHR.config(xhr, cfg);
+        var promise = XHR.promise(xhr, cfg);
+        stop();
+        promise.catch(function(fake) {
+            start();
+            equal(xhr.status, 500);
+            equal(xhr.responseText, 'Internal server error');
+            equal(fake, 'handled');
         });
     });
 
