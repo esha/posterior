@@ -35,7 +35,7 @@ GitHub.ESHA('posterior').then(function(posterior) {
 
 [home]: http://esha.github.io/posterior
 
-Download: [posterior.min.js][full-min] or [posterior.js][full] [![Build Status](https://travis-ci.org/esha/posterior.png?branch=master)](https://travis-ci.org/esha/posterior)  
+Download: [posterior.min.js][min] or [posterior.js][full] [![Build Status](https://travis-ci.org/esha/posterior.png?branch=master)](https://travis-ci.org/esha/posterior)  
 [Bower][bower]: `bower install posterior`  
 [NPM][npm]: `npm install posterior`   
 [Component][component]: `component install esha/posterior`  
@@ -59,6 +59,7 @@ Download: [posterior.min.js][full-min] or [posterior.js][full] [![Build Status](
 * 2015-08-05 [v0.11.0][] (support both ${key} and {key} in URL templates)
 * 2015-08-08 [v0.12.0][] (s/share(d)Result/save(d)Result, and support dynamic link relations via new 'follows' property)
 * 2015-08-13 [v0.13.0][] (upgrade config string filling to also resolve args by index and nested data)
+* 2016-05-18 [v0.14.0][] (support clientError (4xx) and serverError (5xx) listeners, pass XHR to configured catch functions, don't mess with Accept or Content-Type headers when there are already some specified)
 
 [v0.1.4]: https://github.com/esha/posterior/tree/0.1.4
 [v0.2.3]: https://github.com/esha/posterior/tree/0.2.3
@@ -72,3 +73,4 @@ Download: [posterior.min.js][full-min] or [posterior.js][full] [![Build Status](
 [v0.11.0]: https://github.com/esha/posterior/tree/0.11.0
 [v0.12.0]: https://github.com/esha/posterior/tree/0.12.0
 [v0.13.0]: https://github.com/esha/posterior/tree/0.13.0
+[v0.14.0]: https://github.com/esha/posterior/tree/0.14.0

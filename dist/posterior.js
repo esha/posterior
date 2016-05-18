@@ -1,6 +1,6 @@
-/*! posterior - v0.13.0 - 2015-08-13
+/*! posterior - v0.14.0 - 2016-05-18
 * http://esha.github.io/posterior/
-* Copyright (c) 2015 ESHA Research; Licensed MIT, GPL */
+* Copyright (c) 2016 ESHA Research; Licensed MIT, GPL */
 
 (function(D, store) {
     "use strict";
@@ -38,7 +38,10 @@ XHR.main = function(cfg) {
         promise = promise.then(cfg.then);
     }
     if (cfg.catch) {
-        promise = promise.catch(cfg.catch);
+        // call catch with cfg as context and xhr as second arg
+        promise = promise.catch(function caught(error) {
+            return cfg.catch.call(cfg, error, xhr);
+        });
     }
     promise.xhr = xhr;
     return promise;
@@ -66,16 +69,21 @@ XHR.config = function(xhr, cfg) {
     if (cfg.requestedWith !== false) {
         xhr.setRequestHeader('X-Requested-With', cfg.requestedWith || 'XMLHttpRequest');
     }
+    if (cfg.headers) {
+        for (var header in cfg.headers) {
+            xhr.setRequestHeader(header, cfg.headers[header]);
+        }
+    }
     if (cfg.json !== false) {
         try {
             xhr.responseType = 'json';// unsupported by phantomjs (webkit)
         } catch (e) {}
-        xhr.setRequestHeader('Accept', 'application/json');
-        xhr.setRequestHeader('Content-Type', 'application/json');
-    }
-    if (cfg.headers) {
-        for (var header in cfg.headers) {
-            xhr.setRequestHeader(header, cfg.headers[header]);
+        // don't append to existing headers
+        if (!cfg.headers || !cfg.headers['Accept']) {
+            xhr.setRequestHeader('Accept', 'application/json');
+        }
+        if (!cfg.headers || !cfg.headers['Content-Type']) {
+            xhr.setRequestHeader('Content-Type', 'application/json');
         }
     }
 };
@@ -166,7 +174,13 @@ XHR.load = function(cfg, resolve, reject) {
                 }
                 resolve(XHR.isData(data) ? data : xhr);
             } else {
-                reject(status);
+                var error;
+                if (status >= 400 && cfg.clientError) {
+                    error = cfg.clientError(status, xhr);
+                } else if (status >= 500 && cfg.serverError) {
+                    error = cfg.serverError(status, xhr);
+                }
+                reject(error || status);
             }
         } catch (e) {
             reject(e);
