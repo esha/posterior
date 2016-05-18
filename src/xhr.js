@@ -56,16 +56,21 @@ XHR.config = function(xhr, cfg) {
     if (cfg.requestedWith !== false) {
         xhr.setRequestHeader('X-Requested-With', cfg.requestedWith || 'XMLHttpRequest');
     }
+    if (cfg.headers) {
+        for (var header in cfg.headers) {
+            xhr.setRequestHeader(header, cfg.headers[header]);
+        }
+    }
     if (cfg.json !== false) {
         try {
             xhr.responseType = 'json';// unsupported by phantomjs (webkit)
         } catch (e) {}
-        xhr.setRequestHeader('Accept', 'application/json');
-        xhr.setRequestHeader('Content-Type', 'application/json');
-    }
-    if (cfg.headers) {
-        for (var header in cfg.headers) {
-            xhr.setRequestHeader(header, cfg.headers[header]);
+        // don't append to existing headers
+        if (!cfg.headers || !cfg.headers['Accept']) {
+            xhr.setRequestHeader('Accept', 'application/json');
+        }
+        if (!cfg.headers || !cfg.headers['Content-Type']) {
+            xhr.setRequestHeader('Content-Type', 'application/json');
         }
     }
 };

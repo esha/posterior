@@ -173,6 +173,21 @@ Test assertions:
         equal(xhr._method, 'POST');
         equal(xhr._headers['X-Requested-With'], 'XMLHttpRequest');
         strictEqual(xhr._headers.Accept, undefined);
+
+        // make sure headers aren't stomped on by defaulting to json:true
+        var testType = 'application/test';
+        cfg = {
+            url: '/',
+            method: 'POST',
+            headers: {
+                'Accept': testType,
+                'Content-Type': testType
+            }
+        };
+        xhr = new FakeXHR();
+        XHR.config(xhr, cfg);
+        strictEqual(xhr._headers.Accept, testType);
+        strictEqual(xhr._headers['Content-Type'], testType);
     });
 
     test('XHR.promise - part 1', function() {
