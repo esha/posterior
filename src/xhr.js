@@ -56,25 +56,25 @@ XHR.config = function(xhr, cfg) {
     if (cfg.mimeType) {
         xhr.overrideMimeType(cfg.mimeType);
     }
+    // make sure headers we set are also exposed in the config
+    var headers = cfg.headers || (cfg.headers = {});
     if (cfg.requestedWith !== false) {
-        xhr.setRequestHeader('X-Requested-With', cfg.requestedWith || 'XMLHttpRequest');
-    }
-    if (cfg.headers) {
-        for (var header in cfg.headers) {
-            xhr.setRequestHeader(header, cfg.headers[header]);
-        }
+        headers['X-Requested-With'] = cfg.requestedWith || 'XMLHttpRequest';
     }
     if (cfg.json !== false) {
         try {
             xhr.responseType = 'json';// unsupported by phantomjs (webkit)
         } catch (e) {}
-        // don't append to existing headers
-        if (!cfg.headers || !cfg.headers['Accept']) {
-            xhr.setRequestHeader('Accept', 'application/json');
+        // don't squash existing headers
+        if (!headers.Accept) {
+            headers.Accept = 'application/json';
         }
-        if (!cfg.headers || !cfg.headers['Content-Type']) {
-            xhr.setRequestHeader('Content-Type', 'application/json');
+        if (!headers['Content-Type']) {
+            headers['Content-Type'] = 'application/json';
         }
+    }
+    for (var header in headers) {
+        xhr.setRequestHeader(header, headers[header]);
     }
 };
 
