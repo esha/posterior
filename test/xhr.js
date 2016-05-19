@@ -253,11 +253,11 @@ Test assertions:
         var xhr = new FakeXHR(),
             cfg = {
                 data: 'clienterror',
-                clientError: function(status, _xhr) {
+                failure: function(status, _xhr) {
                     strictEqual(xhr, _xhr);
                     strictEqual(this, cfg);
                     equal(status, xhr.status);
-                    return 'handled';
+                    return 'failed';
                 }
             };
         XHR.config(xhr, cfg);
@@ -267,7 +267,7 @@ Test assertions:
             start();
             equal(xhr.status, 404);
             equal(xhr.responseText, 'Not found');
-            equal(fake, 'handled');
+            equal(fake, 'failed');
         });
     });
 
@@ -275,11 +275,11 @@ Test assertions:
         var xhr = new FakeXHR(),
             cfg = {
                 data: 'servererror',
-                serverError: function(status, _xhr) {
+                failure: function(status, _xhr) {
                     strictEqual(xhr, _xhr);
                     strictEqual(this, cfg);
                     equal(status, xhr.status);
-                    return 'handled';
+                    return 'failed';
                 }
             };
         XHR.config(xhr, cfg);
@@ -289,7 +289,7 @@ Test assertions:
             start();
             equal(xhr.status, 500);
             equal(xhr.responseText, 'Internal server error');
-            equal(fake, 'handled');
+            equal(fake, 'failed');
         });
     });
 

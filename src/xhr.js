@@ -145,10 +145,11 @@ XHR.run = function(xhr, cfg, events, fail) {
 XHR.load = function(cfg, resolve, reject) {
     return function() {
         try {
-            // cfg status code handling (e.g. {0: 200} for file://)
+            // cfg status code mapping (e.g. {0: 200} for file://)
             var xhr = cfg.xhr,
                 status = cfg[xhr.status] || xhr.status;
             if (typeof status === "function") {
+                // support status code specific hook functions
                 status = status(xhr) || xhr.status;
             }
             if (status >= 200 && status < 300) {
@@ -165,12 +166,11 @@ XHR.load = function(cfg, resolve, reject) {
                 resolve(XHR.isData(data) ? data : xhr);
             } else {
                 var error;
-                if (status >= 400 && cfg.clientError) {
-                    error = cfg.clientError(status, xhr);
-                } else if (status >= 500 && cfg.serverError) {
-                    error = cfg.serverError(status, xhr);
+                if (cfg.failure) {
+                    // allow failure listener to set result
+                    error = cfg.failure(status, xhr);
                 }
-                reject(error || status);
+                reject(error !== undefined ? error : status);
             }
         } catch (e) {
             reject(e);
