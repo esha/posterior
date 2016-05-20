@@ -175,13 +175,18 @@ Test assertions:
         cfg = {
             prop: 'val'
         };
-        equal('b val', API.resolve('${@a} {prop}', cfg, data), 'API.resolve test');
+        equal('b val b', API.resolve('${@a} {prop} {@a}', data, cfg), 'API.resolve test');
         equal(false, '@a' in data, '@a should not be in data');
         equal('val', cfg.prop, 'cfg.prop should not be consumed');
 
-        var deep = API.resolve('/{deep.nest[0]}', cfg, data);
+        var deep = API.resolve('/{deep.nest[0]}', data, cfg);
         equal(deep, '/2', 'should use eval to resolve key');
         equal(data.deep.nest[0], 2, 'should not consume eval\'d data');
+
+        data = ["hello", "cruel", "world"];
+        equal('hello world, hello!', API.resolve('{0} {2}, {0}!', data), 'API.resolve array, multiple index use');
+        equal(1, data.length, 'array data should be consumed');
+        equal("cruel", data[0], 'correct array data should be consumed');
     });
 
     test('API.resolve (but w/o consuming data)', function() {
@@ -192,18 +197,26 @@ Test assertions:
             consumeData: false,
             prop: 'val'
         };
-        equal('b val', API.resolve('{@a} ${prop}', cfg, data), 'API.resolve');
+        equal('b val', API.resolve('{@a} ${prop}', data, cfg, cfg.consumeData), 'API.resolve');
         equal(true, '@a' in data, 'should be @a in data');
         equal('val', cfg.prop, 'cfg.prop should be "val"');
+
+        var unconsumed = API.resolve('-{@a}-', data, null, false);
+        equal('-b-', unconsumed, 'API.resolve w/no config and consume:false');
+        equal(true, '@a' in data, '@a should remain in data');
+
+        var consumed = API.resolve('-{@a}-', data, cfg, true);
+        equal('-b-', consumed, 'API.resolve w/cfg.consumeData:false and consume:true');
+        equal(false, '@a' in data, '@a should not remain in data');
     });
 
     test('API.resolve (from arguments)', function() {
         expect(4);
 
         var data = ['arg1', 'arg2'],
-            filled = API.resolve('/{1}/{0}/', {}, data);
+            filled = API.resolve('/{1}/{0}/', data);
         equal(filled, '/arg2/arg1/', 'should be filled with arguments');
-        equal(data.length, 2, 'data should not be consumed from arrays');
+        equal(data.length, 0, 'data should be consumed from arrays');
 
         // test it all the way from the top
         var APIpromise = API.promise;

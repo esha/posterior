@@ -142,22 +142,23 @@ API.process = function(cfg) {
     for (var name in cfg) {
         var value = cfg[name];
         if (typeof value === 'string') {
-            value = cfg[name] = API.resolve(value, cfg, cfg.data);
+            value = cfg[name] = API.resolve(value, cfg.data, cfg, cfg.consumeData);
         }
     }
 };
 
-API.resolve = function(string, cfg, data) {
+API.resolve = function(string, data, cfg, consume) {
     var key,
         str = string,
-        re = /\$?\{([^}]+)\}/g;
+        re = /\$?\{([^}]+)\}/g,
+        used = [];
     while ((key = re.exec(string))) {
         key = key[1];
         var val = null;
         if (key in data) {
             val = data[key];
-            if (cfg.consumeData !== false && !Array.isArray(data)) {
-                delete data[key];
+            if (consume !== false && used.indexOf(key) < 0) {
+                used.push(key);
             }
         } else {
             try {
@@ -165,7 +166,7 @@ API.resolve = function(string, cfg, data) {
                 // escape key for replace call at end
                 key = key.replace(/(\[|\.)/g, '\\$1');
             } catch (e) {}
-            if (val === undefined && key in cfg) {
+            if (val === undefined && cfg && key in cfg) {
                 val = cfg[key];
             }
         }
@@ -173,6 +174,18 @@ API.resolve = function(string, cfg, data) {
             val = '';
         }
         str = str.replace(new RegExp('\\$?\\{'+key+'}'), val);
+    }
+    if (consume !== false && used.length > 0) {
+        if (Array.isArray(data)) {
+            used.sort();
+            for (var i=used.length-1; i>=0; i--) {
+                data.splice(used[i], 1);
+            }
+        } else {
+            for (var j=0; j<used.length; j++) {
+                delete data[used[j]];
+            }
+        }
     }
     return str;
 };
