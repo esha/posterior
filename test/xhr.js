@@ -458,4 +458,38 @@ Test assertions:
         window.setTimeout = actualSetTimeout;
     });
 
+    test('XHR throttle', function() {
+        expect(14);
+        // setup
+        var XHRrun = XHR.run,
+            actualSetTimeout = window.setTimeout;
+        XHR.run = function(_xhr, _cfg, events, fail) {
+            strictEqual(xhr, _xhr, 'gets xhr');
+            strictEqual(cfg, _cfg, 'gets cfg');
+            equal(typeof events, 'object', 'gets events obj');
+            equal(typeof fail, 'function', 'gets fail fn');
+        };
+        window.setTimeout = function fakeTimeout(fn, wait) {
+            ok(XHR.throttles.test.queue > 0, 'queue must be > 0 when waiting');
+            ok(wait >= 10, 'wait of ~0 is unnecessary async');
+            fn();// don't actually wait
+        };
+        var xhr = { fake: true },
+            cfg = {
+                throttle: { key: 'test', ms: 200 }
+            };
+
+        // test
+        XHR.promise(xhr, cfg);
+        ok(XHR.throttles, 'has record of throttles');
+        ok(XHR.throttles['test'], 'has test record');
+        equal(XHR.throttles.test.queue, 0, 'first run should not go async');
+        ok(XHR.throttles.test.lastRun, 'recorded time of run');
+        XHR.promise(xhr, cfg);
+
+        // cleanup
+        XHR.run = XHRrun;
+        window.setTimeout = actualSetTimeout;
+    });
+
 }());

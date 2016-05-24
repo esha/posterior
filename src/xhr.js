@@ -111,7 +111,7 @@ XHR.promise = function(xhr, cfg) {
             loadend: XHR.end,
             load: XHR.load(cfg, resolve, fail)
         };
-        XHR.run(xhr, cfg, events, fail);
+        XHR[cfg.throttle ? 'throttle' : 'run'](xhr, cfg, events, fail);
     });
 };
 
@@ -128,6 +128,30 @@ XHR.retry = function(cfg, retry, events, fail) {
             XHR.config(xhr, cfg);
             XHR.run(xhr, cfg, events, fail);
         }, retry.wait *= 2);
+    }
+};
+
+XHR.throttle = function(xhr, cfg, events, fail) {
+    var all = XHR.throttles || (XHR.throttles = {}),
+        throttle = cfg.throttle,
+        record = all[throttle.key];
+    if (!record) {
+        record = all[throttle.key] = {
+            queue: 0,
+            lastRun: Date.now() - throttle.ms
+        };
+    }
+    record.queue++;
+    var next = (record.lastRun + (record.queue * throttle.ms)) - Date.now(),
+        runFn = function throttled() {
+            XHR.run(xhr, cfg, events, fail);
+            record.queue--;
+            record.lastRun = Date.now();
+        };
+    if (next > 10) {
+        setTimeout(runFn, next);
+    } else {
+        runFn();
     }
 };
 
