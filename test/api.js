@@ -102,8 +102,10 @@ Test assertions:
     });
 
     test('API.set', function() {
+        expect(8);
         var fn = function(){},
             cfg = {_fn: fn, _private:{}};
+        fn.cfg = cfg;
 
         API.set(cfg, 'foo', true);
         strictEqual(cfg.foo, true);
@@ -122,6 +124,7 @@ Test assertions:
             strictEqual(o, cfg);
             equal(v, subcfg);
         };
+        API.set(cfg, 'Sub', subcfg);
         API.set(cfg, '@sub', subcfg);
         API.build = build;
 
@@ -389,6 +392,7 @@ Test assertions:
 
         // test non-heirarchical source
         API.follow({
+            cfg: {name:'test'},
             follows: {
                 source: service,
                 path: '_links.type.href'
@@ -397,6 +401,7 @@ Test assertions:
 
         // test heirarchical source
         API.follow({
+            cfg: {name:'test'},
             follows: '_links.type.href'
         }, {
             cfg:{ _parent:{ _fn: service }}
@@ -404,6 +409,7 @@ Test assertions:
 
         // test direct URL result
         API.follow({
+            cfg: {name:'test'},
             follows: {
                 source: function() {
                     return new FakeResolvedPromise("/related/type");

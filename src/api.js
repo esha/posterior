@@ -43,7 +43,6 @@ API.build = function(config, parent, name) {
     }
     for (var prop in config) {
         API.set(cfg, prop, config[prop], cfg.name);
-        API.getter(fn, prop);
     }
 
     fn.cfg = cfg;
@@ -66,6 +65,7 @@ API.main = function(fn, args) {
 
     var cfg = API.getAll(fn.cfg);
     // data must be an object or array
+    cfg._args = args;
     cfg.data = (args.length > 1 || typeof args[0] !== "object") ?
         Array.prototype.slice.call(args) :
         args[0];
@@ -101,7 +101,8 @@ API.follow = function(cfg, fn) {
             leader = fn.cfg._parent._fn;
         }
         if (leader) {
-            return leader().then(function following(resource) {
+            var lead = leader.apply(null, cfg._args || []);
+            return lead.then(function follow(resource) {
                 cfg.url = follows && eval('resource.'+follows) || resource;
                 return XHR(cfg);
             });
@@ -201,7 +202,7 @@ API.getAll = function(cfg, inheriting) {
 
 API.copy = function(to, from) {
     for (var name in from) {
-        if (name.charAt(0) !== '_') {
+        if (name.charAt(0) !== '_' && (name !== 'name' || !(name in to))) {
             if (name.charAt(0) === '!') {
                 to[name.substring(1)] = from[name];
             } else {
@@ -239,20 +240,30 @@ API.getter = function(fn, name) {
     } catch (e) {}// ignore failures
 };
 
-API.set = function(cfg, name, value, parentName) {
+API.set = function(cfg, prop, value, parentName) {
     var api = cfg._fn,
-        subname = parentName+(name.charAt(0)==='.'?'':'.')+name;
+        first = prop.charAt(0),
+        subname = parentName+(first==='.'?'':'.')+prop;
     if (typeof value === "function" && API.get(cfg, 'debug')) {
         value = API.debug(subname, value);
     }
-    if (name.charAt(0) === '.') {
-        api[name.substring(1)] = value;
-    } else if (name.charAt(0) === '@') {
-        api[name.substring(1)] = API.build(value, cfg, subname);
-    } else if (name.charAt(0) === '_') {
-        cfg._private[name.substring(1)] = value;
+    if (first === '_') {
+        cfg._private[prop = prop.substring(1)] = value;
+    } else if (first === '@' ||
+        (typeof value === "object" && first !== first.toLowerCase())) {
+        if (first === '@') {
+            prop = prop.substring(1);
+        }
+        api[prop] = API.build(value, cfg, subname);
     } else {
-        cfg[name] = value;
+        if (first === '.') {
+            prop = prop.substring(1);
+        }
+        cfg[prop] = value;
+    }
+    // let config props be accessed from the api function
+    if (!(prop in api)) {
+        API.getter(api, prop);
     }
 };
 
