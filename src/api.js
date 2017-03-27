@@ -267,22 +267,28 @@ API.set = function(cfg, prop, value, parentName) {
     }
 };
 
-API.debug = function(name, fn) {
+API.log = function(args, level) {
     var console = window.console,
-        concat = Array.prototype.concat;
+        log = console && console[level || 'log'];
+    if (log) {
+        log.apply(console, args);
+    }
+};
+API.debug = function(name, fn) {
     return function debug(arg) {
+        var args;
         try {
-            var args = [name+'('];
-            args.push.apply(args, arguments);
-            args.push(')');
             var ret = fn.apply(this, arguments);
             if (ret !== undefined && ret !== arg) {
-                console.debug.apply(console, [name, '->', ret]);
+                args = [name+'('];
+                args.push.apply(args, arguments);
+                args.push(') resolved to ', ret);
+                API.log(args, 'debug');
             }
             return ret;
         } catch (e) {
-            var args = concat.apply([name, e], arguments);
-            console.error.apply(console, args);
+            args = Array.prototype.concat.apply([name, e], arguments);
+            API.log(args, 'error');
             throw e;
         }
     };
