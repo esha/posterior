@@ -10,7 +10,7 @@ module.exports = function(grunt) {
       '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
       '<%= pkg.homepage ? "* " + pkg.homepage + "\\n" : "" %>' +
       '* Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>;' +
-      ' Licensed <%= _.pluck(pkg.licenses, "type").join(", ") %> */\n',
+      ' Licensed <%= pkg.licenses.map(function(l){return l.type;}).join(", ") %> */\n',
     // Task configuration.
     clean: {
       files: ['dist']
@@ -74,6 +74,20 @@ module.exports = function(grunt) {
         src: ['test/**/*.js']
       },
     },
+    nugetpack: {
+        dist: {
+            src: '<%= pkg.name %>.nuspec',
+            dest: 'dist/',
+            options: {
+              version: '<%= pkg.version %>'
+            }
+        }
+    },
+    nugetpush: {
+        dist: {
+            src: 'dist/<%= pkg.name %>.<%= pkg.version %>.nupkg'
+        }
+    }
   });
 
   // These plugins provide necessary tasks.
@@ -83,8 +97,10 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-qunit');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-compress');
+  grunt.loadNpmTasks('grunt-nuget');
 
   // Default task.
   grunt.registerTask('default', ['clean', 'frame', 'jshint', 'uglify', 'compress', 'qunit']);
+  grunt.registerTask('nuget', ['nugetpack', 'nugetpush']);
 
 };
