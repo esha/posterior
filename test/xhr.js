@@ -462,7 +462,11 @@ Test assertions:
         expect(14);
         // setup
         var XHRrun = XHR.run,
-            actualSetTimeout = window.setTimeout;
+            actualSetTimeout = window.setTimeout,
+            xhr = { fake: true },
+            cfg = {
+                throttle: { key: 'test', ms: 200 }
+            };
         XHR.run = function(_xhr, _cfg, events, fail) {
             strictEqual(xhr, _xhr, 'gets xhr');
             strictEqual(cfg, _cfg, 'gets cfg');
@@ -474,10 +478,6 @@ Test assertions:
             ok(wait >= 10, 'wait of ~0 is unnecessary async');
             fn();// don't actually wait
         };
-        var xhr = { fake: true },
-            cfg = {
-                throttle: { key: 'test', ms: 200 }
-            };
 
         // test
         XHR.promise(xhr, cfg);
