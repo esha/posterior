@@ -6,6 +6,6 @@ var Posterior = window.Posterior = function(config, name) {
     return Posterior.api(config, name);
 };
 <%= content %>
-Posterior.version = "<%= version %>";
+Posterior.version = "<%= pkg.version %>";
 
 })(document, window.store || function(){});
