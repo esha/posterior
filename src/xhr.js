@@ -50,6 +50,9 @@ XHR.config = function(xhr, cfg) {
             xhr[prop] = value;
         }
         if (typeof value === "function") {
+            if (prop === "then" || prop === "catch") {
+                cfg[prop] = value.bind(cfg);
+            }
             xhr.addEventListener(prop, value.bind(xhr));
         }
     }
