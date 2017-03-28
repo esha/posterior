@@ -1,37 +1,4 @@
-[Posterior][home] Give your backend services intuitive front-end interfaces (uses XHR, JSON, Promise) via declarative, hierarchical, extensible configurations.
-
-### Basic Examples
-```javascript
-var JSONTest = new Posterior({
-    url: 'https://ip.jsontest.com',
-    then: function(jsonObject) {
-        return jsonObject.ip;
-    }
-});
-
-JSONTest().then(function(ip) {
-    console.log('IP is '+ip);
-}).catch(function(error) {
-    console.error('JSONTest error: ', error);
-});
-```
-
-```javascript
-var GitHub = new Posterior({
-    url: 'https://api.github.com/',
-
-    '@ESHA': {
-        url: '/repos/esha/{0}',
-    }
-});
-
-GitHub.ESHA('posterior').then(function(posterior) {
-    console.log(posterior);
-});
-
-```
-
-
+[Posterior][home] Give your backend services intuitive front-end interfaces (uses XHR, JSON, Promise) via declarative, hierarchical configurations.
 
 [home]: http://esha.github.io/posterior
 
@@ -40,11 +7,37 @@ Download: [posterior.min.js][min] or [posterior.js][full] [![Build Status](https
 [NPM][npm]: `npm install posterior`   
 [Component][component]: `component install esha/posterior`  
 
+
+[![Build Status](https://travis-ci.org/esha/posterior.png?branch=master)](https://travis-ci.org/esha/posterior)
+[![npm version](https://badge.fury.io/js/posterior.svg)](https://badge.fury.io/js/store)
+[![npm](https://img.shields.io/npm/dm/posterior.svg?maxAge=2592000)](https://www.npmjs.com/package/posterior)  
+
 [full]: https://raw.github.com/esha/posterior/master/dist/posterior.js
 [min]: https://raw.github.com/esha/posterior/master/dist/posterior.min.js
 [npm]: https://npmjs.org/package/posterior
 [bower]: http://bower.io/
 [component]: http://component.io/
+
+### Example
+```javascript
+var GitHub = new Posterior({
+    url: 'https://api.github.com',
+    load: function() {
+        console.log('Requested:', this.cfg.url);
+    },
+    ESHA: {
+        url: '/repos/esha/{0}',
+        Version: {
+            follows: 'tags_url',
+            then: function(tags) {
+                return tags[0].name;
+            }
+        }
+    }
+}, 'GitHub');
+
+GitHub.ESHA.Version('posterior');
+```
 
 ### Release History
 * 2014-09-08 [v0.1.4][] (initial)
