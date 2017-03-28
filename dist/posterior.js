@@ -1,6 +1,6 @@
-/*! posterior - v0.16.0 - 2016-05-24
+/*! posterior - v0.17.0 - 2017-03-27
 * http://esha.github.io/posterior/
-* Copyright (c) 2016 ESHA Research; Licensed MIT, GPL */
+* Copyright (c) 2017 ESHA Research; Licensed MIT, GPL */
 
 (function(D, store) {
     "use strict";
@@ -60,6 +60,9 @@ XHR.config = function(xhr, cfg) {
             xhr[prop] = value;
         }
         if (typeof value === "function") {
+            if (prop === "then" || prop === "catch") {
+                cfg[prop] = value.bind(cfg);
+            }
             xhr.addEventListener(prop, value.bind(xhr));
         }
     }
@@ -362,7 +365,6 @@ API.build = function(config, parent, name) {
     }
     for (var prop in config) {
         API.set(cfg, prop, config[prop], cfg.name);
-        API.getter(fn, prop);
     }
 
     fn.cfg = cfg;
@@ -385,6 +387,7 @@ API.main = function(fn, args) {
 
     var cfg = API.getAll(fn.cfg);
     // data must be an object or array
+    cfg._args = args;
     cfg.data = (args.length > 1 || typeof args[0] !== "object") ?
         Array.prototype.slice.call(args) :
         args[0];
@@ -420,7 +423,8 @@ API.follow = function(cfg, fn) {
             leader = fn.cfg._parent._fn;
         }
         if (leader) {
-            return leader().then(function following(resource) {
+            var lead = leader.apply(null, cfg._args || []);
+            return lead.then(function follow(resource) {
                 cfg.url = follows && eval('resource.'+follows) || resource;
                 return XHR(cfg);
             });
@@ -520,7 +524,7 @@ API.getAll = function(cfg, inheriting) {
 
 API.copy = function(to, from) {
     for (var name in from) {
-        if (name.charAt(0) !== '_') {
+        if (name.charAt(0) !== '_' && (name !== 'name' || !(name in to))) {
             if (name.charAt(0) === '!') {
                 to[name.substring(1)] = from[name];
             } else {
@@ -558,39 +562,55 @@ API.getter = function(fn, name) {
     } catch (e) {}// ignore failures
 };
 
-API.set = function(cfg, name, value, parentName) {
+API.set = function(cfg, prop, value, parentName) {
     var api = cfg._fn,
-        subname = parentName+(name.charAt(0)==='.'?'':'.')+name;
+        first = prop.charAt(0),
+        subname = parentName+(first==='.'?'':'.')+prop;
     if (typeof value === "function" && API.get(cfg, 'debug')) {
         value = API.debug(subname, value);
     }
-    if (name.charAt(0) === '.') {
-        api[name.substring(1)] = value;
-    } else if (name.charAt(0) === '@') {
-        api[name.substring(1)] = API.build(value, cfg, subname);
-    } else if (name.charAt(0) === '_') {
-        cfg._private[name.substring(1)] = value;
+    if (first === '_') {
+        cfg._private[prop = prop.substring(1)] = value;
+    } else if (first === '@' ||
+        (typeof value === "object" && first !== first.toLowerCase())) {
+        if (first === '@') {
+            prop = prop.substring(1);
+        }
+        api[prop] = API.build(value, cfg, subname);
     } else {
-        cfg[name] = value;
+        if (first === '.') {
+            prop = prop.substring(1);
+        }
+        cfg[prop] = value;
+    }
+    // let config props be accessed from the api function
+    if (!(prop in api)) {
+        API.getter(api, prop);
     }
 };
 
-API.debug = function(name, fn) {
+API.log = function(args, level) {
     var console = window.console,
-        concat = Array.prototype.concat;
+        log = console && console[level || 'log'];
+    if (log) {
+        log.apply(console, args);
+    }
+};
+API.debug = function(name, fn) {
     return function debug(arg) {
+        var args;
         try {
-            var args = [name+'('];
-            args.push.apply(args, arguments);
-            args.push(')');
             var ret = fn.apply(this, arguments);
             if (ret !== undefined && ret !== arg) {
-                console.debug.apply(console, [name, '->', ret]);
+                args = [name+'('];
+                args.push.apply(args, arguments);
+                args.push(') resolved to ', ret);
+                API.log(args, 'debug');
             }
             return ret;
         } catch (e) {
-            var args = concat.apply([name, e], arguments);
-            console.error.apply(console, args);
+            args = Array.prototype.concat.apply([name, e], arguments);
+            API.log(args, 'error');
             throw e;
         }
     };
@@ -646,6 +666,6 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "";
+Posterior.version = "0.17.0";
 
 })(document, window.store || function(){});

@@ -53,6 +53,7 @@ GitHub.ESHA.Version('posterior');
 * 2016-05-18 [v0.14.1][] (support failure listener for non-200 status codes, pass XHR to configured catch functions, don't override specified Accept or Content-Type headers)
 * 2016-05-20 [v0.15.0][] (API.resolve can now support repeated replacements when consuming data, consume array data, and is easier to use as util)
 * 2016-05-23 [v0.16.0][] (add throttle:{key,ms} support)
+* 2017-03-27 [v0.17.0][] (distinguish subfunction from props via capitalization or @, bind then/catch functions to built cfg)
 
 [v0.1.4]: https://github.com/esha/posterior/tree/0.1.4
 [v0.2.3]: https://github.com/esha/posterior/tree/0.2.3
@@ -69,3 +70,5 @@ GitHub.ESHA.Version('posterior');
 [v0.14.1]: https://github.com/esha/posterior/tree/0.14.1
 [v0.15.0]: https://github.com/esha/posterior/tree/0.15.0
 [v0.16.0]: https://github.com/esha/posterior/tree/0.16.0
+[v0.17.0]: https://github.com/esha/posterior/tree/0.17.0
+
