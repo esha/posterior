@@ -102,7 +102,7 @@ Test assertions:
     });
 
     test('API.set', function() {
-        expect(8);
+        expect(9);
         var fn = function(){},
             cfg = {_fn: fn, _private:{}};
         fn.cfg = cfg;
@@ -117,6 +117,8 @@ Test assertions:
 
         API.set(cfg, '.prop', 'bar');
         strictEqual(fn.prop, 'bar');
+        API.set(cfg, 'prop2', 'bar2');
+        strictEqual(fn.prop2, 'bar2');
 
         var build = API.build,
             subcfg = {};
