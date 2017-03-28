@@ -1,56 +1,70 @@
 <html>
 <head>
-    <title>Posterior - Make that backend interface in shape!</title>
+    <title>Posterior - Give your backend interfaces a better shape!</title>
     <style>
         code, pre {
             background-color: #e5f3ff;
+            font-size: 0.9em;
+            margin: 0;
+        }
+        label {
+            font-size: 0.8em;
+            display: inline-block;
+            margin-top: 0.2em;
+        }
+        .downloads {
             font-size: 0.9em;
         }
     </style>
 </head>
 <body>
-    <article itemprop="text"><p>Posterior is a small but powerful tool (~4kb, gzipped) that gives your backend services intuitive front-end interfaces via declarative, hierarchical, extensible configurations.</p>
+    <article itemprop="text"
+        ><p>Posterior is a small, powerful tool (~4kb, gzipped) that gives remote services intuitive, simple interfaces via declarative, hierarchical configurations.</p>
+
+        <p class="downloads">
+            Download: <a href="https://raw.github.com/esha/posterior/master/dist/posterior.min.js">posterior.min.js</a> or
+            <a href="https://raw.github.com/esha/posterior/master/dist/posterior.js">posterior.js</a><br>
+            <a href="http://bower.io/">Bower</a>: <code>bower install posterior</code><br>
+            <a href="https://npmjs.org/package/posterior">NPM</a>: <code>npm install posterior</code><br>
+            <a href="https://travis-ci.org/esha/posterior"><img src="https://camo.githubusercontent.com/3b4e84007ff21fd8f94c2005d8aa4b763b19e14a/68747470733a2f2f7472617669732d63692e6f72672f657368612f706f73746572696f722e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/esha/posterior.png?branch=master" style="max-width:100%;"></a>
+            <a href="https://badge.fury.io/js/store"><img src="https://camo.githubusercontent.com/33a0b90d1ce0eff9e5d448376a66e46b43cbacd0/68747470733a2f2f62616467652e667572792e696f2f6a732f706f73746572696f722e737667" alt="npm version" data-canonical-src="https://badge.fury.io/js/posterior.svg" style="max-width:100%;"></a>
+            <a href="https://www.npmjs.com/package/posterior"><img src="https://camo.githubusercontent.com/0ceb69aecdca76858f08b3f62f3cae3d4fa5f1cd/68747470733a2f2f696d672e736869656c64732e696f2f6e706d2f646d2f706f73746572696f722e7376673f6d61784167653d32353932303030" alt="npm" data-canonical-src="https://img.shields.io/npm/dm/posterior.svg?maxAge=2592000" style="max-width:100%;"></a>
+        </p>
 
         <h3>Example</h3>
         <div class="explanation">
-            The following example creates functions that serve as representations of three remote resources. Calling the functions fires off XHR requests to the composed URL and returns a Promise that will resolve with the JSON response as the value and the XHR itself as the context.
+            The following code creates functions to represent three related remote resources. Calling each function composes the request, sends it, and returns a Promise that will resolve with the JSON response as the value. This is designed to show how the properties and methods in your Posterior configuration compose in a way that is hierarchical and intuitive.
             <ul>
-            <li><code>GitHub();</code> requests 'http://api.github.com'</li>
-            <li><code>GitHub.ESHA('arg_here');</code> requests 'http://api.github.com/repos/esha/arg_here'</li>
-            <li><code>GitHub.ESHA.Tags('arg_here');</code> requests 'http://api.github.com/repos/esha/arg_here', looks for the 'tags_url' property in the response, then requests that URL</li>
+            <li><code>GitHub();</code> requests 'http://api.github.com', logs the URL</li>
+            <li><code>GitHub.ESHA('arg_here');</code> requests 'http://api.github.com/repos/esha/arg_here', logs the URL</li>
+            <li><code>GitHub.ESHA.Version('arg_here');</code> requests 'http://api.github.com/repos/esha/arg_here', logs the URL, looks for the 'tags_url' property in the response, requests (and logs)that URL, then returns the name of the first tag.</li>
             </ul>
         </div>
         <div>
 <pre id="github">window.GitHub = new Posterior({
-    debug: true,
     url: 'https://api.github.com',
     load: function() {
-        console.log(this.cfg.url, this.response);
+        console.log('Requested:', this.cfg.url);
     },
     ESHA: {
         url: '/repos/esha/{0}',
-        Tags: {
+        Version: {
             follows: 'tags_url',
-        },
+            then: function(tags) {
+                return tags[0].name;
+            }
+        }
     }
-});
-GitHub.ESHA.Tags('posterior');
+}, 'GitHub');
+
+GitHub.ESHA.Version('posterior');
 </pre>
-            <button click="run(#github)">Run</button> <br>
+            <button click="run(#github)" vista="!github">Run</button>
             <div class="output" vista="github">
                 <label>Output:</label>
                 <pre id="githubOutput"></pre>
             </div>
         </div>
-
-        <p>
-            Download: <a href="https://raw.github.com/esha/posterior/master/dist/posterior.min.js">posterior.min.js</a> or
-            <a href="https://raw.github.com/esha/posterior/master/dist/posterior.js">posterior.js</a> 
-            <a href="https://travis-ci.org/esha/posterior"><img src="https://camo.githubusercontent.com/3b4e84007ff21fd8f94c2005d8aa4b763b19e14a/68747470733a2f2f7472617669732d63692e6f72672f657368612f706f73746572696f722e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/esha/posterior.png?branch=master" style="max-width:100%;"></a><br>
-            <a href="http://bower.io/">Bower</a>: <code>bower install posterior</code><br>
-            <a href="https://npmjs.org/package/posterior">NPM</a>: <code>npm install posterior</code><br>
-            <a href="http://component.io/">Component</a>: <code>component install esha/posterior</code>
-        </p>
     </article>
 
     <script src="../dist/posterior.js"></script>
@@ -59,22 +73,50 @@ GitHub.ESHA.Tags('posterior');
     <script src="https://unpkg.com/vista"></script>
     <script src="https://unpkg.com/eventi"></script>
     <script type="text/javascript">
+    (function(document, window, Posterior, Eventi, JSON) {
+        // hijack console.debug to echo to a DOM element
+        var _display,
+            _log = console.log,
+            toString = function(obj) {
+                if (typeof obj === "object") {
+                    if (Array.isArray(obj) && obj.length > 1) {
+                        obj = '[ '+toString(obj[0])+', ... ]';
+                    }
+                }
+                return (obj+'');
+            };
+        console.log = function() {
+            _log.apply(this, arguments);
+            if (_display) {
+                var args = Array.prototype.map.call(arguments, toString);
+                _display.textContent += args.join(' ')+'\n';
+                _display.scrollIntoView();
+            }
+        };
+
         Eventi.on("run", function(e) {
+            window.result = 'placeholder';
             Eventi.fire('location@'+e.detail);
 
             var script = document.query(e.detail).textContent;
-            window.result = eval(script);
-            result.then(function(obj) {
-                if (Array.isArray(obj) && obj.length > 2) {
-                    obj = obj.slice(0, 2);
-                    obj.push('...');
-                }
-                var json = JSON.stringify(obj, null, 2),
-                    outEl = document.query(e.detail+'Output');
-                outEl.textContent += json + '\n';
-                outEl.scrollIntoView();
+            _display = document.query(e.detail+'Output');
+
+            var result = eval(script);
+            console.log('Returned:', result);
+            result.then(function(value) {
+                console.log('Resolved to:', value);
             });
+
+            // expose for REPL
+            window.result = result;
         });
+        Eventi.on('location@#github', function(e) {
+            if (!window.result) {
+                // reset display
+                Eventi.fire('location@#');
+            }
+        })
+    })(document, window, Posterior, Eventi, JSON)
     </script>
 </body>
 </html>
