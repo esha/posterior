@@ -8,7 +8,7 @@
     <owners>nbubna esha</owners>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Small, powerful tool to give remote services simple, intuitive interfaces via declarative, heirarchical, extensible configurations.</description>
-    <tags></tags>
+    <tags>backend api rest remote interface</tags>
   </metadata>
   <files>
     <file src="dist/*.js" target="dist" />
