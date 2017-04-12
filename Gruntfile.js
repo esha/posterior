@@ -31,6 +31,12 @@ module.exports = function(grunt) {
         dest: 'dist/<%= pkg.name %>.js'
       },
     },
+    copy: {
+      docs: {
+        src: 'dist/<%= pkg.name %>.js',
+        dest: 'docs/<%= pkg.name %>.js'
+      }
+    },
     uglify: {
       options: {
         banner: '<%= banner %>',
@@ -99,7 +105,7 @@ module.exports = function(grunt) {
   grunt.loadTasks('tasks');
 
   // Default task.
-  grunt.registerTask('default', ['clean', 'frame', 'jshint', 'uglify', 'compress', 'qunit']);
+  grunt.registerTask('default', ['clean', 'frame', 'jshint', 'uglify', 'compress', 'qunit', 'copy']);
   grunt.registerTask('nuget', ['nugetpack', 'nugetpush']);
 
 };
