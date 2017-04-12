@@ -107,7 +107,7 @@ API.follow = function(cfg, fn) {
                 return XHR(cfg);
             });
         } else {
-            return Promise.reject("Cannot follow link relation without a parent function.");
+            return Promise.reject("Cannot follow link relation without a source function.");
         }
     } else {
         return XHR(cfg);
