@@ -59,8 +59,8 @@ API.extend = function(config, name) {
 };
 
 API.main = function(fn, args) {
-    if (fn.cfg.savedResult) {
-        return Promise.resolve(fn.cfg.savedResult);
+    if (fn.cfg._singletonResult) {
+        return Promise.resolve(fn.cfg._singletonResult);
     }
 
     var cfg = API.getAll(fn.cfg);
@@ -72,9 +72,9 @@ API.main = function(fn, args) {
     API.process(cfg);
     var promise = API.promise(cfg, fn);
 
-    if (cfg.saveResult) {
+    if (cfg.singleton) {
         promise.then(function(result) {
-            fn.cfg.savedResult = result;
+            fn.cfg._singletonResult = result;
         });
     }
     return promise;
