@@ -5,7 +5,7 @@ htmlClass = D.documentElement.classList;
 
 XHR.ctor = XMLHttpRequest;
 XHR.main = function(cfg) {
-    var xhr, 
+    var xhr,
         promise;
 
     if (cfg.cache) {
@@ -174,23 +174,28 @@ XHR.load = function(cfg, resolve, reject) {
         try {
             // cfg status code mapping (e.g. {0: 200} for file://)
             var xhr = cfg.xhr,
-                status = cfg[xhr.status] || xhr.status;
+                status = cfg[xhr.status] || xhr.status,
+                json = cfg.json !== false;
             if (typeof status === "function") {
                 // support status code specific hook functions
                 status = status(xhr) || xhr.status;
             }
             if (status >= 200 && status < 300) {
-                if (cfg.json !== false && typeof xhr.response !== "object") {
+                if (json && typeof xhr.response !== "object") {
                     XHR.forceJSONResponse(xhr);
                 }
                 var data = xhr.responseType ? xhr.response :
-                           cfg.json !== false ? xhr.responseObject :
+                           json ? xhr.responseObject :
                            xhr.responseText;
-                if (cfg.responseData && XHR.isData(data)) {
-                    var ret = cfg.responseData.call(xhr, data);
-                    data = ret === undefined ? data : ret;
+                if (json && data === null) {
+                    reject('Presumed syntax error in JSON response, suppressed by your browser.');
+                } else {
+                    if (cfg.responseData && XHR.isData(data)) {
+                        var ret = cfg.responseData.call(xhr, data);
+                        data = ret === undefined ? data : ret;
+                    }
+                    resolve(XHR.isData(data) ? data : xhr);
                 }
-                resolve(XHR.isData(data) ? data : xhr);
             } else {
                 var error;
                 if (cfg.failure) {
