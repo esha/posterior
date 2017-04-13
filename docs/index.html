@@ -1,47 +1,32 @@
 <html>
 <head>
     <title>Posterior - Give your backend interfaces a better shape!</title>
-    <style>
-        code, pre {
-            background-color: #e5f3ff;
-            font-size: 0.9em;
-            margin: 0;
-        }
-        label {
-            font-size: 0.8em;
-            display: inline-block;
-            margin-top: 0.2em;
-        }
-        .downloads {
-            font-size: 0.9em;
-        }
-    </style>
+    <link rel="stylesheet" href="docs.css" media="screen">
 </head>
 <body>
-    <article itemprop="text"
-        ><p>Posterior is a small, powerful tool (~4kb, gzipped) that gives remote services intuitive, simple interfaces via declarative, hierarchical configurations.</p>
-
-        <p class="downloads">
-            Download: <a href="https://raw.github.com/esha/posterior/master/dist/posterior.min.js">posterior.min.js</a> or
-            <a href="https://raw.github.com/esha/posterior/master/dist/posterior.js">posterior.js</a><br>
-            <a href="http://bower.io/">Bower</a>: <code>bower install posterior</code><br>
-            <a href="https://npmjs.org/package/posterior">NPM</a>: <code>npm install posterior</code><br>
+    <header>
+        <p class="intro">
+            <b>Posterior</b> is a small, powerful tool <span class="aside">(~4kb, gzipped)</span> that gives remote services intuitive, simple interfaces via declarative, hierarchical configurations.
+        </p>
+        <div class="getit">
+            <b>Download:</b> <a href="https://raw.github.com/esha/posterior/master/dist/posterior.min.js">posterior.min.js</a>,
+            <a href="https://raw.github.com/esha/posterior/master/dist/posterior.js">posterior.js</a>, <code>https://unpkg.com/posterior</code>
+            <br>
+            <b>Install:</b> <code><a href="http://bower.io/">bower</a> install posterior</code>, <code><a href="https://npmjs.org/package/posterior">npm</a> install posterior</code>, <code><a href="https://yarnpkg.com/en/package/posterior">yarn</a> add posterior</code>
+            <br>
+        </div>
+        <div class="badges">
             <a href="https://travis-ci.org/esha/posterior"><img src="https://camo.githubusercontent.com/3b4e84007ff21fd8f94c2005d8aa4b763b19e14a/68747470733a2f2f7472617669732d63692e6f72672f657368612f706f73746572696f722e706e673f6272616e63683d6d6173746572" alt="Build Status" data-canonical-src="https://travis-ci.org/esha/posterior.png?branch=master" style="max-width:100%;"></a>
             <a href="https://badge.fury.io/js/store"><img src="https://camo.githubusercontent.com/33a0b90d1ce0eff9e5d448376a66e46b43cbacd0/68747470733a2f2f62616467652e667572792e696f2f6a732f706f73746572696f722e737667" alt="npm version" data-canonical-src="https://badge.fury.io/js/posterior.svg" style="max-width:100%;"></a>
             <a href="https://www.npmjs.com/package/posterior"><img src="https://camo.githubusercontent.com/0ceb69aecdca76858f08b3f62f3cae3d4fa5f1cd/68747470733a2f2f696d672e736869656c64732e696f2f6e706d2f646d2f706f73746572696f722e7376673f6d61784167653d32353932303030" alt="npm" data-canonical-src="https://img.shields.io/npm/dm/posterior.svg?maxAge=2592000" style="max-width:100%;"></a>
-        </p>
-
-        <h3>Example</h3>
-        <div class="explanation">
-            The following code creates functions to represent three related remote resources. Calling each function composes the request, sends it, and returns a Promise that will resolve with the JSON response as the value. This is designed to show how the properties and methods in your Posterior configuration compose in a way that is hierarchical and intuitive.
-            <ul>
-            <li><code>GitHub();</code> requests 'http://api.github.com', logs the URL</li>
-            <li><code>GitHub.ESHA('arg_here');</code> requests 'http://api.github.com/repos/esha/arg_here', logs the URL</li>
-            <li><code>GitHub.ESHA.Version('arg_here');</code> requests 'http://api.github.com/repos/esha/arg_here', logs the URL, looks for the 'tags_url' property in the response, requests (and logs)that URL, then returns the name of the first tag.</li>
-            </ul>
         </div>
-        <div>
-<pre id="github">window.GitHub = new Posterior({
+    </header>
+    <article id="intro-example">
+        <h3>Quick Example</h3>
+        <div class="demo">
+            <div class="input">
+                <label>JavaScript:</label>
+                <pre class="code" contenteditable>window.GitHub = new Posterior({
     url: 'https://api.github.com',
     load: function() {
         console.log('Requested:', this.cfg.url);
@@ -59,64 +44,57 @@
 
 GitHub.ESHA.Version('posterior');
 </pre>
-            <button click="run(#github)" vista="!github">Run</button>
-            <div class="output" vista="github">
-                <label>Output:</label>
-                <pre id="githubOutput"></pre>
+                <button click="run">Run</button>
+                <button click="comments" vista="console">Show Comments</button>
             </div>
+            <div class="comments" vista="!console">
+                <label>Comments:</label>
+                <pre class="comments">// Create a 'GitHub' function
+  // base URL for all GitHub resources
+  // will be called on XHR 'load' event
+    // context will be the final configuration at load time
+
+  // Create an ESHA sub-function that inherits from the GitHub one
+    // appends to root URL, replaces {0} with first argument when called
+    // Create a Version sub-function that inherits from the ESHA one
+      // retrieve URL from 'tags_url' property of response to automatic ESHA call
+      // then function to modify eventual resolution
+
+
+
+
+// 2nd argument gives name to instance for debugging output
+
+// Calls the function with value to be inserted in URL
+</pre>
+            </div>
+            <div class="output" vista="console">
+                <label>console.log:</label>
+                <pre class="console"></pre>
+            </div>
+        </div>
+        <div class="explanation">
+            Calling one of the created functions builds the request, sends it, and returns a Promise that resolves to the server response (JSON parsed by default).
         </div>
     </article>
 
-    <script src="../dist/posterior.js"></script>
+    <article id="configuration">
+        <h3>Configuration:</h3>
+        <div api-table="configuration.json"></div>
+    </article>
+
+    <article id="composition">
+        <h3>Composition</h3>
+        TODO: explanation and examples of how hierarchical composition works and can be controlled with syntax, Api.extend(), Api.config(cfg), etc
+    </article>
+
+    <script src="posterior.js"></script>
     <script src="https://unpkg.com/store2"></script>
-    <script src="https://unpkg.com/domx"></script>
     <script src="https://unpkg.com/vista"></script>
+    <script src="https://unpkg.com/domx"></script>
     <script src="https://unpkg.com/eventi"></script>
-    <script type="text/javascript">
-    (function(document, window, Posterior, Eventi, JSON) {
-        // hijack console.debug to echo to a DOM element
-        var _display,
-            _log = console.log,
-            toString = function(obj) {
-                if (typeof obj === "object") {
-                    if (Array.isArray(obj) && obj.length > 1) {
-                        obj = '[ '+toString(obj[0])+', ... ]';
-                    }
-                }
-                return (obj+'');
-            };
-        console.log = function() {
-            _log.apply(this, arguments);
-            if (_display) {
-                var args = Array.prototype.map.call(arguments, toString);
-                _display.textContent += args.join(' ')+'\n';
-                _display.scrollIntoView();
-            }
-        };
-
-        Eventi.on("run", function(e) {
-            window.result = 'placeholder';
-            Eventi.fire('location@'+e.detail);
-
-            var script = document.query(e.detail).textContent;
-            _display = document.query(e.detail+'Output');
-
-            var result = eval(script);
-            console.log('Returned:', result);
-            result.then(function(value) {
-                console.log('Resolved to:', value);
-            });
-
-            // expose for REPL
-            window.result = result;
-        });
-        Eventi.on('location@#github', function(e) {
-            if (!window.result) {
-                // reset display
-                Eventi.fire('location@#');
-            }
-        })
-    })(document, window, Posterior, Eventi, JSON)
-    </script>
+    <script src="https://unpkg.com/case"></script>
+    <script src="api-table.js"></script>
+    <script src="demo.js"></script>
 </body>
 </html>

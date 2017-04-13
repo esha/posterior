@@ -1,0 +1,310 @@
+{
+    "head": {
+        "option": "Option",
+        "type": "Type",
+        "description": "Description",
+        "default": "Default Value",
+        "example": "Example",
+        "notes": "Notes"
+    },
+    "body": [
+        { "subHeader": "Request Options" },
+        {
+            "option": "url",
+            "type": "String",
+            "description": "A complete or partial URL or URL template, to be composed and filled before being requested.",
+            "example": "url: '/item/{id}'",
+            "notes": "URLs are composed from the function hierarchy before being filled from the passed arguments"
+        },
+        {
+            "option": "method",
+            "type": "String",
+            "description": "Sets the HTTP method to be used when requesting the URL",
+            "default": "GET",
+            "example": "method: 'POST'",
+            "notes": "Use <code>Posterior.xhr.methodMap</code> to alias methods (PATCH is mapped to POST by default)"
+        },
+        {
+            "option": "headers",
+            "type": "Object",
+            "description": "An object whose key-value pairs will be set as request headers",
+            "default": {
+                "X-Requested-With": "XMLHttpRequest",
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            "example": "headers: {\n  'Cache-Control': 'nocache'\n}",
+            "notes": "The default headers will be appended whenever they do not contradict other settings."
+        },
+        {
+            "option": "json",
+            "type": "Boolean",
+            "description": "Sets <code>XMLHttpRequest.responseType</code> to 'json' and both <code>Accept</code> and <code>Content-Type</code> headers to <code>application/json</code>, if those headers are not already set",
+            "default": true,
+            "example": "json: false"
+        },
+        {
+            "option": "mimeType",
+            "type": "String",
+            "description": "Passed to <code><a href=\"https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/overrideMimeType\">XMLHttpRequest.overrideMimeType()</a></code>",
+            "example": ""
+        },
+        {
+            "option": "requestedWith",
+            "type": "String",
+            "description": "Shortcut for setting the <code>X-Requested-With</code> header",
+            "default": "XMLHttpRequest",
+            "example": "requestedWith: 'ExampleTool'"
+        },
+        {
+            "option": "requestData",
+            "type": "Function",
+            "description": "Optional handler that allows access to and/or alteration of request data/body before stringification and sending.",
+            "example": "requestData: function(data) {\n  console.log('Sending', data, 'to', this.url);\n}",
+            "notes": "Context (<code>this</code>) for the function is the processed. Non-undefined return values will replace the data entirely."
+        },
+        {
+            "option": "consumeData",
+            "type": "Boolean",
+            "description": "Tells Posterior whether properties of the data passed in at call-time should be deleted when used to resolve a configuration value.",
+            "default": false,
+            "example": "consumeData: true",
+            "notes": "Sometimes used to keep portions of the data merged into a URL from being sent as part of the request body, params, etc."
+        },
+        {
+            "option": "async",
+            "type": "Boolean",
+            "description": "Passed to <code><a href=\"https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/open\">XMLHttpRequest.open()</a></code>",
+            "default": true,
+            "example": "async: false"
+        },
+        {
+            "option": "username",
+            "type": "String",
+            "description": "Passed to <code><a href=\"https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/open\">XMLHttpRequest.open()</a></code>",
+            "example": "username: 'nbubna'"
+        },
+        {
+            "option": "password",
+            "type": "String",
+            "description": "Passed to <code><a href=\"https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/open\">XMLHttpRequest.open()</a></code>",
+            "example": "password: getPassword()"
+        },
+        { "subHeader": "XMLHttpRequest Events" },
+        {
+            "option": "loadstart",
+            "type": "",
+            "description": "",
+            "default": "",
+            "example": "",
+            "notes": ""
+        },
+        {
+            "option": "progress",
+            "type": "",
+            "description": "",
+            "default": "",
+            "example": "",
+            "notes": ""
+        },
+        {
+            "option": "abort",
+            "type": "",
+            "description": "",
+            "default": "",
+            "example": "",
+            "notes": ""
+        },
+        {
+            "option": "error",
+            "type": "",
+            "description": "",
+            "default": "",
+            "example": "",
+            "notes": ""
+        },
+        {
+            "option": "load",
+            "type": "",
+            "description": "",
+            "default": "",
+            "example": "",
+            "notes": ""
+        },
+        {
+            "option": "timeout",
+            "type": "",
+            "description": "",
+            "default": "",
+            "example": "",
+            "notes": ""
+        },
+        {
+            "option": "loadend",
+            "type": "",
+            "description": "",
+            "default": "",
+            "example": "",
+            "notes": ""
+        },
+        {
+            "option": "readystatechange",
+            "type": "",
+            "description": "",
+            "default": "",
+            "example": "",
+            "notes": ""
+        },
+        { "subHeader": "Response Options" },
+        {
+            "option": "then",
+            "type": "Function",
+            "description": "A function to be executed when the Promise wrapping the XHR request is resolved",
+            "example": "then: function(value) {\n  return value.property;\n}",
+            "notes": "The context of the function will be the composed configuration for the call"
+        },
+        {
+            "option": "catch",
+            "type": "Function",
+            "description": "A function to be executed if the request fails, whether due to failed XHR request or error in a handler",
+            "default": "",
+            "example": "catch: function(error) {\n  console.error(error);\n}",
+            "notes": "The context of the function will be the composed configuration for the call"
+        },
+        {
+            "option": "<a href=\"https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html\">[statusCode]</a>",
+            "type": "Number",
+            "description": "",
+            "default": "",
+            "example": "",
+            "notes": ""
+        },
+        {
+            "option": "<a href=\"https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html\">[statusCode]</a>",
+            "type": "Function",
+            "description": "Optional handler that ",
+            "default": "",
+            "example": "",
+            "notes": ""
+        },
+        {
+            "option": "responseData",
+            "type": "Function",
+            "description": "Optional handler that allows access to and/or alteration of returned data before Promise resolution",
+            "example": "responseData: function(data) {\n  data._responseAt = Date.now();\n}",
+            "notes": "Context (<code>this</code>) for the function is the completed XMLHttpRequest. Non-undefined return values will replace the data entirely."
+        },
+        {
+            "option": "failure",
+            "type": "Function",
+            "description": "Optional handler that allows access to and/or replacement of the error before Promise rejection",
+            "example": "failure: function(status, xhr) {\n console.error('Could not load', this.url, ) \n}",
+            "notes": ""
+        },
+        { "subHeader": "Behavior Options" },
+        {
+            "option": "requires",
+            "type": "Array",
+            "description": "List of prerequisites (usually provided as Strings) to be resolved before executing this request",
+            "example": "['GitHub.Version', 'app.users']",
+            "notes": "String requirements are evaluated against the window. If they resolve to functions (or functions are directly included in the array), those functions are executed. So long as all functions resolve to a truthy value (or non-function requirements are themselves truthy), then the request will proceed."
+        },
+        {
+            "option": "singleton",
+            "type": "Boolean",
+            "description": "Tells Posterior to save the final result of the call in memory and immediately resolve all future calls with that value.",
+            "default": false,
+            "example": "singleton: true",
+            "notes": "For oft-needed, unchanging resources, skips all configuration resolution, network requests, and all handlers for subsequent calls. Posterior calls that vary in result should never use this."
+        },
+        {
+            "option": "cache",
+            "type": "Number",
+            "description": "Number of minutes to cache the XHR result in localStorage. Requires <code>store2</code> library to be available in window, along with its <code>store.cache.js</code> plugin.",
+            "example": "cache: 15",
+            "notes": "The cache key is specific to the processed configuration. Unlike <a href=\"#singleton\">singleton</a>, this should work for any type of call."
+        },
+        {
+            "option": "cache",
+            "type": "Boolean",
+            "description": "Tells Posterior to cache the XHR in localStorage. Requires only the <code>store2</code> library to be available in window.",
+            "example": "cache: true",
+            "notes": "The cache key is specific to the processed configuration. Unlike <a href=\"#singleton\">singleton</a>, this should work for any type of call. Unlike <a href=\"#cache\">cache (Number)</a>, this will not expire."
+        },
+        {
+            "option": "retry",
+            "type": "Boolean",
+            "description": "Tells Posterior to retry failed requests.",
+            "default": false,
+            "example": "retry: true",
+            "notes": "This will retry no more than three times and wait 1s, 2s, then 4s between attempts"
+        },
+        {
+            "option": "retry",
+            "type": "Object",
+            "description": "Tells Posterior to retry failed requests up to the specified limit of times, beginning with the specified wait time",
+            "example": { "wait": 500, "limit": 1 },
+            "notes": "The wait for each subsequent retry is always doubled. If only a <code>limit</code> is specified, initial <code>wait</code> will be 1000ms. If only a <code>wait</code>, <code>limit</code> will be 3."
+        },
+        {
+            "option": "throttle",
+            "type": "Object",
+            "description": "Queues calls to ensure the specified number milliseconds passes between them.",
+            "example": "{\n  key: '_uniqueVal',\n  ms: 500\n}",
+            "notes": "Throttled requests are queued under the specified key, allowing different endpoints to share a throttle."
+        },
+        {
+            "option": "configure",
+            "type": "Function",
+            "description": "A function that will receive the to-be composed configuration before Posterior processes it",
+            "example": "configure: function(cfg){\n  cfg.singleton = confirm('Final Answer?');\n}",
+            "notes": "Most used to set configuration values must be retrieved and cannot be declared in the initial configuration."
+        },
+        {
+            "option": "debug",
+            "type": "Boolean",
+            "description": "Turns on console logging of all calls",
+            "default": false,
+            "example": "debug: true",
+            "notes": "Override <code>Posterior.api.log</code> for debug calls to target something besides the console."
+        },
+        {
+            "option": "follows",
+            "type": "Object",
+            "description": "Like <a href=\"#follows\">follows string</a>, but allows you to specify a Promise-returning source that is not the parent Posterior.",
+            "example": "{\n  source: OtherFn,\n  path: 'branches_url'\n}"
+        },
+        { "subHeader": "Composition Options" },
+        {
+            "option": "SubFunctions",
+            "type": "Object",
+            "description": "Creates a child Posterior instance that extends the parent configuration",
+            "example": "Version: {\n  follows: 'tags_url',\n  then: function(tags) {\n    return tags[0].name;\n  }\n}",
+            "notes": "Any JavaScript object whose key starts with a capital letter is built into a sub-function."
+        },
+        {
+            "option": "_privateProperty",
+            "type": "<i>any</i>",
+            "description": "Turns any configuration property into one that is not shared with sub-functions",
+            "example": "_debug: true"
+        },
+        {
+            "option": "!noCombining",
+            "type": "<i>any</i>",
+            "description": "Turns any configuration property into one that is not combined with parent function properties of the same name at call time",
+            "example": "\"!url\": myCompleteUrl"
+        },
+        {
+            "option": ".NotASubFunction",
+            "type": "Object",
+            "description": "Prevents a configuration property with an uppercase first character and object value from being built into a sub-function"
+        },
+        {
+            "option": "follows",
+            "type": "String",
+            "description": "A property to be evaluated against the result of requesting the parent Posterior to retrieve the URL for this request.",
+            "example": "'tags_url'",
+            "notes": "This allows a different request to provide the URL for this request."
+        }
+    ]
+}

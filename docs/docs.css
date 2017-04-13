@@ -1,0 +1,104 @@
+.intro {
+    font-size: 1.1em;
+    padding: 2vmin 5vmin 0vmin;
+}
+.aside {
+    font-style: italic;
+    font-size: 0.8em;
+}
+.getit > code, .getit > a {
+    margin-left: 0.3em;
+    display: inline-block;
+    background-color: #fff;
+    font-size: 0.9em;
+}
+.getit > b {
+    min-width: 4.7em;
+    display: inline-block;
+}
+
+code, pre {
+    margin: 0;
+}
+code, pre {
+    background-color: #e5f3ff;
+    font-size: 0.9em;
+}
+h3 {
+    margin-bottom: 0.2em;
+}
+label {
+    font-size: 0.8em;
+    display: inline-block;
+    margin-top: 0.2em;
+}
+article {
+    margin-bottom: 1.5em;
+}
+
+.input, .output, .comments {
+    width: auto;
+    margin-left: 5px;
+}
+.demo {
+    display: flex;
+}
+
+table {
+    border-collapse: collapse;
+}
+th, td {
+    border: 1px solid black;
+    padding: 0 3px;
+}
+tr.sub-header th {
+    text-align: left;
+    font-weight: normal;
+    font-style: italic;
+    padding-top: 1em;
+}
+td {
+    vertical-align: top;
+}
+td.option {
+    font-family: monospace;
+    white-space: pre;
+}
+td.description {
+    max-width: 25vmax;
+}
+td.example, td.default {
+    font-family: monospace;
+    white-space: pre;
+    font-size: 0.9em;
+}
+.multiline {
+    display: inline-block;
+    max-width: 22vmax;
+    overflow: auto;
+}
+td.notes {
+    font-size: 0.85em;
+}
+td.notes .multiline {
+    max-height: 15vmin;
+    overflow: auto;
+}
+
+@media only screen 
+    and (max-device-width: 480px) {
+    body {
+        font-size: 1.5em;
+    }
+    .demo {
+        display: block;
+    }
+    .demo label, .comments, button[click=comments] {
+        display: none;
+    }
+    .input, .output {
+        width: 95%;
+        margin-left: 2.5%;
+        font-size: 1.8em;
+    }
+}
