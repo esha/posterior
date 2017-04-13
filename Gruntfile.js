@@ -106,6 +106,7 @@ module.exports = function(grunt) {
 
   // Default task.
   grunt.registerTask('default', ['clean', 'frame', 'jshint', 'uglify', 'compress', 'qunit', 'copy']);
+  grunt.registerTask('test', ['clean', 'frame', 'jshint', 'uglify', 'qunit']);
   grunt.registerTask('nuget', ['nugetpack', 'nugetpush']);
 
 };

@@ -24,7 +24,7 @@
     }
   ],
   "scripts": {
-    "test": "grunt qunit"
+    "test": "grunt test"
   },
   "dependencies": {
     "promise-polyfill": "^6.0.2",
