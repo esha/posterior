@@ -1,10 +1,10 @@
 {
     "head": {
         "option": "Option",
-        "type": "Type",
+        "type": "Expects",
         "description": "Description",
-        "default": "Default Value",
         "example": "Example",
+        "default": "Default Value",
         "notes": "Notes"
     },
     "body": [
@@ -44,19 +44,6 @@
             "example": "json: false"
         },
         {
-            "option": "mimeType",
-            "type": "String",
-            "description": "Passed to <code><a href=\"https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/overrideMimeType\">XMLHttpRequest.overrideMimeType()</a></code>",
-            "example": ""
-        },
-        {
-            "option": "requestedWith",
-            "type": "String",
-            "description": "Shortcut for setting the <code>X-Requested-With</code> header",
-            "default": "XMLHttpRequest",
-            "example": "requestedWith: 'ExampleTool'"
-        },
-        {
             "option": "requestData",
             "type": "Function",
             "description": "Optional handler that allows access to and/or alteration of request data/body before stringification and sending.",
@@ -70,6 +57,40 @@
             "default": false,
             "example": "consumeData: true",
             "notes": "Sometimes used to keep portions of the data merged into a URL from being sent as part of the request body, params, etc."
+        },
+        {
+            "option": "requestedWith",
+            "type": "String",
+            "description": "Shortcut for setting the <code>X-Requested-With</code> header",
+            "default": "XMLHttpRequest",
+            "example": "requestedWith: 'ExampleTool'"
+        },
+        { "subHeader": "XMLHttpRequest Options" },
+        {
+            "option": "timeout",
+            "type": "Number",
+            "description": "Set as the <code><a href=\"https://xhr.spec.whatwg.org/#the-timeout-attribute\">timeout</a></code> attribute of the XHR",
+            "example": "timeout: 1000"
+        },
+        {
+            "option": "withCredentials",
+            "type": "Boolean",
+            "description": "Set as the <code><a href=\"https://xhr.spec.whatwg.org/#the-timeout-attribute\">withCredentials</a></code> attribute of the XHR",
+            "default": false,
+            "example": "withCredentials: true"
+        },
+        {
+            "option": "load, timeout,\nloadstart, loadend,\nabort, error,\nprogress,\nreadystatechange",
+            "type": "Function",
+            "description": "Specifies a function to be called when the matching <a href=\"https://xhr.spec.whatwg.org/#event-handlers\">XHR event</a> fires",
+            "example": "function(e) {\n  console.log('XHR event: ', e);\n  console.log('URL:', this.cfg.url);\n}",
+            "notes": "The context (<code>this</code>) for such event handlers will always be the XHR instance"
+        },
+        {
+            "option": "mimeType",
+            "type": "String",
+            "description": "Passed to <code><a href=\"https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/overrideMimeType\">XMLHttpRequest.overrideMimeType()</a></code>",
+            "example": "mimeType: 'text/plain'"
         },
         {
             "option": "async",
@@ -89,71 +110,6 @@
             "type": "String",
             "description": "Passed to <code><a href=\"https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/open\">XMLHttpRequest.open()</a></code>",
             "example": "password: getPassword()"
-        },
-        { "subHeader": "XMLHttpRequest Events" },
-        {
-            "option": "loadstart",
-            "type": "",
-            "description": "",
-            "default": "",
-            "example": "",
-            "notes": ""
-        },
-        {
-            "option": "progress",
-            "type": "",
-            "description": "",
-            "default": "",
-            "example": "",
-            "notes": ""
-        },
-        {
-            "option": "abort",
-            "type": "",
-            "description": "",
-            "default": "",
-            "example": "",
-            "notes": ""
-        },
-        {
-            "option": "error",
-            "type": "",
-            "description": "",
-            "default": "",
-            "example": "",
-            "notes": ""
-        },
-        {
-            "option": "load",
-            "type": "",
-            "description": "",
-            "default": "",
-            "example": "",
-            "notes": ""
-        },
-        {
-            "option": "timeout",
-            "type": "",
-            "description": "",
-            "default": "",
-            "example": "",
-            "notes": ""
-        },
-        {
-            "option": "loadend",
-            "type": "",
-            "description": "",
-            "default": "",
-            "example": "",
-            "notes": ""
-        },
-        {
-            "option": "readystatechange",
-            "type": "",
-            "description": "",
-            "default": "",
-            "example": "",
-            "notes": ""
         },
         { "subHeader": "Response Options" },
         {

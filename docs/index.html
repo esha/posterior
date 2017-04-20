@@ -9,10 +9,10 @@
             <b>Posterior</b> is a small, powerful tool <span class="aside">(~4kb, gzipped)</span> that gives remote services intuitive, simple interfaces via declarative, hierarchical configurations.
         </p>
         <div class="getit">
-            <b>Download:</b> <a href="https://raw.github.com/esha/posterior/master/dist/posterior.min.js">posterior.min.js</a>,
+            <a href="https://raw.github.com/esha/posterior/master/dist/posterior.min.js">posterior.min.js</a>,
             <a href="https://raw.github.com/esha/posterior/master/dist/posterior.js">posterior.js</a>, <code>https://unpkg.com/posterior</code>
             <br>
-            <b>Install:</b> <code><a href="http://bower.io/">bower</a> install posterior</code>, <code><a href="https://npmjs.org/package/posterior">npm</a> install posterior</code>, <code><a href="https://yarnpkg.com/en/package/posterior">yarn</a> add posterior</code>
+            <code><a href="http://bower.io/">bower</a> install posterior</code>, <code><a href="https://npmjs.org/package/posterior">npm</a> install posterior</code>, <code><a href="https://yarnpkg.com/en/package/posterior">yarn</a> add posterior</code>
             <br>
         </div>
         <div class="badges">
@@ -58,8 +58,8 @@ GitHub.ESHA.Version('posterior');
     // appends to root URL, replaces {0} with first argument when called
     // Create a Version sub-function that inherits from the ESHA one
       // retrieve URL from 'tags_url' property of response to automatic ESHA call
-      // then function to modify eventual resolution
-
+      // then function to modify resolved value
+        // <i>tags</i> is JSON object, already parsed for use
 
 
 
@@ -73,9 +73,17 @@ GitHub.ESHA.Version('posterior');
                 <pre class="console"></pre>
             </div>
         </div>
-        <div class="explanation">
-            Calling one of the created functions builds the request, sends it, and returns a Promise that resolves to the server response (JSON parsed by default).
-        </div>
+    </article>
+
+    <article>
+        <h3>What Is This?</h3>
+        <p>
+        Posterior's simplifies configuration and encapsulation of "AJAX" calls. It takes a structured configuration object and converts it into a hierarchy of logically named functions. Those functions, when called, compose the desired XHR configuration and response handlers and return a Promise. That Promise will resolve (or reject) when all the configured request and response handling has completed.
+        </p>
+
+        <p>
+        To achieve better encapsulation, Posterior provides a number of high level features commonly needed for interacting with remote resources. Posterior functions can interpolate URL templates, wait for required dependencies to be resolved, throttle request rates, caching, follow URLS in linked resources, singleton resources, and automatic retry for failed requests.
+        The intent of this encapsulation is to allow client-side developers to keep implementation details of their interactions with remote servers out of their client-side logic. All translation between the data the client requests/receives and the data the server expects/returns can be hidden behind a friendly, Promise-returning function.</p>
     </article>
 
     <article id="configuration">

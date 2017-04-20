@@ -1,3 +1,6 @@
+article {
+    padding: 0 1em;
+}
 .intro {
     font-size: 1.1em;
     padding: 2vmin 5vmin 0vmin;
@@ -5,6 +8,9 @@
 .aside {
     font-style: italic;
     font-size: 0.8em;
+}
+.getit, .badges {
+    text-align: center;
 }
 .getit > code, .getit > a {
     margin-left: 0.3em;
@@ -59,13 +65,18 @@ tr.sub-header th {
 }
 td {
     vertical-align: top;
+    font-size: 0.9em;
 }
 td.option {
     font-family: monospace;
     white-space: pre;
+    font-weight: bold;
 }
 td.description {
     max-width: 25vmax;
+}
+td.default {
+    max-width: 13vmax;
 }
 td.example, td.default {
     font-family: monospace;
@@ -76,6 +87,9 @@ td.example, td.default {
     display: inline-block;
     max-width: 22vmax;
     overflow: auto;
+}
+td.default .multiline {
+    max-width: 13vmax;
 }
 td.notes {
     font-size: 0.85em;

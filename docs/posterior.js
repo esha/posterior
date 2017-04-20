@@ -1,4 +1,4 @@
-/*! posterior - v0.17.0 - 2017-04-12
+/*! posterior - v0.17.0 - 2017-04-13
 * http://esha.github.io/posterior/
 * Copyright (c) 2017 ESHA Research; Licensed MIT, GPL */
 
