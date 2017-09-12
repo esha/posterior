@@ -1,6 +1,6 @@
-/*! posterior - v0.17.0 - 2017-04-13
+/*! posterior - v0.18.0 - 2017-09-12
 * http://esha.github.io/posterior/
-* Copyright (c) 2017 ESHA Research; Licensed MIT, GPL */
+* Copyright (c) 2017 ESHA Research; Licensed  */
 
 (function(D, store) {
     "use strict";
@@ -16,8 +16,7 @@ var Posterior = window.Posterior = function(config, name) {
 };
 var XHR = Posterior.xhr = function(cfg) {
     return XHR.main(cfg);
-},
-htmlClass = D.documentElement.classList;
+};
 
 XHR.ctor = XMLHttpRequest;
 XHR.main = function(cfg) {
@@ -289,14 +288,24 @@ XHR.properties = {
 Object.defineProperties(XMLHttpRequest.prototype, XHR.properties);
 
 XHR.active = 0;
-XHR.activeClass = 'xhr-active';
+XHR.notify = function(){};
+if (D) {
+    var htmlClassList = D.documentElement.classList;
+    XHR.activeClass = 'xhr-active';
+    XHR.notify = function(isActive) {
+        htmlClassList[isActive ? 'add' : 'remove'](XHR.activeClass);
+    };
+}
+// track number of active requests
+// only notify when number changes to/from zero
 XHR.start = function() {
-    XHR.active++;
-    htmlClass.add(XHR.activeClass);
+    if (++XHR.active === 1) {
+        XHR.notify(true);
+    }
 };
 XHR.end = function() {
-    if (!--XHR.active) {
-        htmlClass.remove(XHR.activeClass);
+    if (--XHR.active === 0) {
+        XHR.notify(false);
     }
 };
 
@@ -677,6 +686,6 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "0.17.0";
+Posterior.version = "0.18.0";
 
-})(document, window.store || function(){});
+})(window.document, window.store || function(){});

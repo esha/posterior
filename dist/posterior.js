@@ -1,21 +1,26 @@
-/*! posterior - v0.17.0 - 2017-03-27
+/*! posterior - v0.18.0 - 2017-09-12
 * http://esha.github.io/posterior/
-* Copyright (c) 2017 ESHA Research; Licensed MIT, GPL */
+* Copyright (c) 2017 ESHA Research; Licensed  */
 
 (function(D, store) {
     "use strict";
 
 var Posterior = window.Posterior = function(config, name) {
+    if (typeof config === "string") {
+        config = { url: config };
+    }
+    if (typeof name === "function") {
+        config.then = name;
+    }
     return Posterior.api(config, name);
 };
 var XHR = Posterior.xhr = function(cfg) {
     return XHR.main(cfg);
-},
-htmlClass = D.documentElement.classList;
+};
 
 XHR.ctor = XMLHttpRequest;
 XHR.main = function(cfg) {
-    var xhr, 
+    var xhr,
         promise;
 
     if (cfg.cache) {
@@ -184,23 +189,28 @@ XHR.load = function(cfg, resolve, reject) {
         try {
             // cfg status code mapping (e.g. {0: 200} for file://)
             var xhr = cfg.xhr,
-                status = cfg[xhr.status] || xhr.status;
+                status = cfg[xhr.status] || xhr.status,
+                json = cfg.json !== false;
             if (typeof status === "function") {
                 // support status code specific hook functions
                 status = status(xhr) || xhr.status;
             }
             if (status >= 200 && status < 300) {
-                if (cfg.json !== false && typeof xhr.response !== "object") {
+                if (json && typeof xhr.response !== "object") {
                     XHR.forceJSONResponse(xhr);
                 }
                 var data = xhr.responseType ? xhr.response :
-                           cfg.json !== false ? xhr.responseObject :
+                           json ? xhr.responseObject :
                            xhr.responseText;
-                if (cfg.responseData && XHR.isData(data)) {
-                    var ret = cfg.responseData.call(xhr, data);
-                    data = ret === undefined ? data : ret;
+                if (json && data === null) {
+                    reject('Presumed syntax error in JSON response, suppressed by your browser.');
+                } else {
+                    if (cfg.responseData && XHR.isData(data)) {
+                        var ret = cfg.responseData.call(xhr, data);
+                        data = ret === undefined ? data : ret;
+                    }
+                    resolve(XHR.isData(data) ? data : xhr);
                 }
-                resolve(XHR.isData(data) ? data : xhr);
             } else {
                 var error;
                 if (cfg.failure) {
@@ -278,14 +288,24 @@ XHR.properties = {
 Object.defineProperties(XMLHttpRequest.prototype, XHR.properties);
 
 XHR.active = 0;
-XHR.activeClass = 'xhr-active';
+XHR.notify = function(){};
+if (D) {
+    var htmlClassList = D.documentElement.classList;
+    XHR.activeClass = 'xhr-active';
+    XHR.notify = function(isActive) {
+        htmlClassList[isActive ? 'add' : 'remove'](XHR.activeClass);
+    };
+}
+// track number of active requests
+// only notify when number changes to/from zero
 XHR.start = function() {
-    XHR.active++;
-    htmlClass.add(XHR.activeClass);
+    if (++XHR.active === 1) {
+        XHR.notify(true);
+    }
 };
 XHR.end = function() {
-    if (!--XHR.active) {
-        htmlClass.remove(XHR.activeClass);
+    if (--XHR.active === 0) {
+        XHR.notify(false);
     }
 };
 
@@ -381,8 +401,8 @@ API.extend = function(config, name) {
 };
 
 API.main = function(fn, args) {
-    if (fn.cfg.savedResult) {
-        return Promise.resolve(fn.cfg.savedResult);
+    if (fn.cfg._singletonResult) {
+        return Promise.resolve(fn.cfg._singletonResult);
     }
 
     var cfg = API.getAll(fn.cfg);
@@ -394,9 +414,9 @@ API.main = function(fn, args) {
     API.process(cfg);
     var promise = API.promise(cfg, fn);
 
-    if (cfg.saveResult) {
+    if (cfg.singleton) {
         promise.then(function(result) {
-            fn.cfg.savedResult = result;
+            fn.cfg._singletonResult = result;
         });
     }
     return promise;
@@ -429,7 +449,7 @@ API.follow = function(cfg, fn) {
                 return XHR(cfg);
             });
         } else {
-            return Promise.reject("Cannot follow link relation without a parent function.");
+            return Promise.reject("Cannot follow link relation without a source function.");
         }
     } else {
         return XHR(cfg);
@@ -666,6 +686,6 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "0.17.0";
+Posterior.version = "0.18.0";
 
-})(document, window.store || function(){});
+})(window.document, window.store || function(){});
