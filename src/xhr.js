@@ -1,7 +1,6 @@
 var XHR = Posterior.xhr = function(cfg) {
     return XHR.main(cfg);
-},
-htmlClass = D.documentElement.classList;
+};
 
 XHR.ctor = XMLHttpRequest;
 XHR.main = function(cfg) {
@@ -273,14 +272,24 @@ XHR.properties = {
 Object.defineProperties(XMLHttpRequest.prototype, XHR.properties);
 
 XHR.active = 0;
-XHR.activeClass = 'xhr-active';
+XHR.notify = function(){};
+if (D) {
+    var htmlClassList = D.documentElement.classList;
+    XHR.activeClass = 'xhr-active';
+    XHR.notify = function(isActive) {
+        htmlClassList[isActive ? 'add' : 'remove'](XHR.activeClass);
+    };
+}
+// track number of active requests
+// only notify when number changes to/from zero
 XHR.start = function() {
-    XHR.active++;
-    htmlClass.add(XHR.activeClass);
+    if (++XHR.active === 1) {
+        XHR.notify(true);
+    }
 };
 XHR.end = function() {
-    if (!--XHR.active) {
-        htmlClass.remove(XHR.activeClass);
+    if (--XHR.active === 0) {
+        XHR.notify(false);
     }
 };
 

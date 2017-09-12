@@ -14,4 +14,4 @@ var Posterior = window.Posterior = function(config, name) {
 <%= content %>
 Posterior.version = "<%= pkg.version %>";
 
-})(document, window.store || function(){});
+})(window.document, window.store || function(){});
