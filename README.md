@@ -37,6 +37,12 @@ var GitHub = new Posterior({
 GitHub.ESHA.Version('posterior');
 ```
 
+### What Is This?
+
+Posterior is a tool to handle encapsulation and configuration of "AJAX" calls. It takes a structured configuration and converts it into a hierarchy of functions that, when called, composes the desired XHR configuration and response handlers and returns a Promise. That Promise will resolve (or reject) when all the configured request and response handling has completed.
+
+Apart from the basic XHR encapsulation and handling, Posterior provides a number of high level features commonly needed for interacting with remote resources. These include interpolating URLs, waiting for required dependencies to be resolved, throttling request rates, caching, following URLS of linked resources, singleton resources, and automatic retry for failed requests. The intent of this encapsulation is to allow client-side developers to keep implementation details of their interactions with remote servers out of their client-side logic. All translation between the data the client requests/receives and the data the server expects/returns can be hidden behind a friendly, Promise-returning function.
+
 ### Release History
 * 2014-09-08 [v0.1.4][] (initial)
 * 2014-09-09 [v0.2.3][] (debug mode, preprocess, no global)
