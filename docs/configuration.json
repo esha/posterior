@@ -62,7 +62,7 @@
             "option": "requestedWith",
             "type": "String",
             "description": "Shortcut for setting the <code>X-Requested-With</code> header",
-            "default": "XMLHttpRequest",
+            "default": "\"XMLHttpRequest\"",
             "example": "requestedWith: 'ExampleTool'"
         },
         { "subHeader": "XMLHttpRequest Options" },
@@ -232,16 +232,16 @@
         },
         { "subHeader": "Composition Options" },
         {
-            "option": "SubFunctions",
+            "option": "ChildFunction",
             "type": "Object",
             "description": "Creates a child Posterior instance that extends the parent configuration",
             "example": "Version: {\n  follows: 'tags_url',\n  then: function(tags) {\n    return tags[0].name;\n  }\n}",
-            "notes": "Any JavaScript object whose key starts with a capital letter is built into a sub-function."
+            "notes": "Any JavaScript object whose key starts with a capital letter is built into a child function."
         },
         {
             "option": "_privateProperty",
             "type": "<i>any</i>",
-            "description": "Turns any configuration property into one that is not shared with sub-functions",
+            "description": "Turns any configuration property into one that is not shared with child functions",
             "example": "_debug: true"
         },
         {
@@ -251,9 +251,10 @@
             "example": "\"!url\": myCompleteUrl"
         },
         {
-            "option": ".NotASubFunction",
+            "option": ".NotAChildFunction",
             "type": "Object",
-            "description": "Prevents a configuration property with an uppercase first character and object value from being built into a sub-function"
+            "description": "Prevents a configuration property with an uppercase first character and object value from being built into a child function",
+            "example": "\".MyObj\": {\n  example: true\n}"
         },
         {
             "option": "follows",

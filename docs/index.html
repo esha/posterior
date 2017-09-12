@@ -83,7 +83,12 @@ GitHub.ESHA.Version('posterior');
 
         <p>
         To achieve better encapsulation, Posterior provides a number of high level features commonly needed for interacting with remote resources. Posterior functions can interpolate URL templates, wait for required dependencies to be resolved, throttle request rates, caching, follow URLS in linked resources, singleton resources, and automatic retry for failed requests.
-        The intent of this encapsulation is to allow client-side developers to keep implementation details of their interactions with remote servers out of their client-side logic. All translation between the data the client requests/receives and the data the server expects/returns can be hidden behind a friendly, Promise-returning function.</p>
+        The intent of this encapsulation is to allow client-side developers to keep implementation details of their interactions with remote servers out of their client-side logic. All translation between the data the client requests/receives and the data the server expects/returns can be hidden behind a friendly, Promise-returning function.
+        </p>
+
+        <p>
+        Where Posterior really begins to shine is when the resources being configured are hierarchical, as it makes it trivial to for instances to inherit from and build upon each other by combining and composing properties and functions instead of simply overriding them. Posterior supports <a href="#composition-options">special syntax</a> for controlling how properties with the same key are inherited and combined, but in most cases, these are unnecessary.
+        </p>
     </article>
 
     <article id="configuration">

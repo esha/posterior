@@ -1,3 +1,7 @@
+body {
+    background-color: #f5c1c1;
+}
+
 article {
     padding: 0 1em;
 }
@@ -15,7 +19,7 @@ article {
 .getit > code, .getit > a {
     margin-left: 0.3em;
     display: inline-block;
-    background-color: #fff;
+    background-color: inherit;
     font-size: 0.9em;
 }
 .getit > b {
@@ -27,7 +31,7 @@ code, pre {
     margin: 0;
 }
 code, pre {
-    background-color: #e5f3ff;
+    background-color: #f7d9c3;
     font-size: 0.9em;
 }
 h3 {
