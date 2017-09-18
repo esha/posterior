@@ -268,7 +268,7 @@ API.set = function(cfg, prop, value, parentName) {
 };
 
 API.log = function(args, level) {
-    var console = window.console,
+    var console = W.console,
         log = console && console[level || 'log'];
     if (log) {
         log.apply(console, args);
