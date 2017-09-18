@@ -9,6 +9,11 @@
     "email": "nathan@esha.com",
     "url": "http://www.esha.com"
   },
+  "files": [
+    "dist",
+    "index.d.ts"
+  ],
+  "types": "index.d.ts",
   "main": "dist/posterior.js",
   "repository": {
     "type": "git",
