@@ -1,6 +1,9 @@
-declare function Posterior<T>(config?: Posterior.Config, name?: string): Posterior.Requester;
+declare function Posterior<T>(config?: Posterior.InputConfig, name?: string): Posterior.Requester;
 declare namespace Posterior {
     type XHREventHandler = (this: XHR, event: Event) => any;
+    type T = any;
+    type U = any;
+
     interface XHR extends XMLHttpRequest {
         readonly cfg: RequesterConfig;
         readonly responseObject: {};
@@ -13,15 +16,13 @@ declare namespace Posterior {
     }
 
     // one per call to Posterior()
-    interface InputConfig {
+    interface InputConfigBase {
         // basic HTTP
         name?: string;
         url?: string;// must have follows, if no url
         method?: string;// default is GET
         mimeType?: string;
         headers?: {
-            Accept: string;
-            'Content-Type': string;
             [header: string]: string;
         };
         username?: string;
@@ -30,7 +31,7 @@ declare namespace Posterior {
         // behavior configuration
         auto?: boolean;
         cache?: boolean;
-        debug?: bolean;
+        debug?: boolean;
         retry?: boolean | {
             wait?: number;
             limit?: number;
@@ -50,13 +51,13 @@ declare namespace Posterior {
         // handlers
         configure?(this: ActiveConfig, cfg: ActiveConfig): void;
         then?(this: ActiveConfig, then: (value: T) => U): Promise<U>;
-        catch?(handler: (this: ActiveConfig, error: any) => U | Thenable<U>): Promise<U>;
+        catch?(handler: (this: ActiveConfig, error: any) => U | Promise<U>): Promise<U>;
         catch?(handler: (this: ActiveConfig, error: any, xhr?: XHR) => void): Promise<U>;
 
         // XHR specific configuration
         async?: boolean;
         responseType?: XMLHttpRequestResponseType;
-        timeout?: number;
+        timeout?: number | XHREventHandler;
         withCredentials?: boolean;
         msCaching?: string;
         requestedWith?: string;
@@ -65,19 +66,22 @@ declare namespace Posterior {
         requestData?: (data: any) => undefined | any;
         onreadystatechange?: XHREventHandler;
         error?: XHREventHandler;
-        timeout?: XHREventHandler;
+        //timeout?: XHREventHandler;
         loadstart?: XHREventHandler;
         loadend?: XHREventHandler;
         load?: XHREventHandler;
-        [event: string]: XHREventHandler;
  
         // response handlers and status code mapping
-        [statusCode: number]: number | ((xhr: XHR) => number);
         responseData?: (this: XHR, data: any) => T | XHR;
         failure?: (this: ActiveConfig, status: number, xhr: XHR) => any;
     }
+    type InputConfig = InputConfigBase & {
+        // status code mapping and mapping handlers
+        [statusCode: number]: number | ((xhr: XHR) => number);
+    };
+
     // one per Requester (structured)
-    interface RequesterConfig extends InputConfig {
+    interface RequesterConfigBase {
         name: string;
 
         // internals
@@ -85,17 +89,19 @@ declare namespace Posterior {
         _parent: RequesterConfig | null;
         _private: InputConfig;
     }
+    type RequesterConfig = RequesterConfigBase & InputConfig;
+    
     // one per call (flattened, filled, and called)
-    interface ActiveConfig extends RequesterConfig {
+    interface ActiveConfigBase {
         _args: [any];
         data: [any] | {};
         _singletonResult?: T;
     }
+    type ActiveConfig = ActiveConfigBase & RequesterConfig;
 
     const version: string;
 
-    const xhr: (cfg: ActiveConfig) => XHRPromise;
-    const xhr: (cfg: ActiveConfig) => XHRPromise;
+    function xhr(cfg: ActiveConfig): XHRPromise;
     namespace xhr {
         // utilities
         function isData(data: any): boolean;
@@ -105,11 +111,11 @@ declare namespace Posterior {
         const methodMap: {
             [METHOD: string]: string;
         };
-        activeClass: undefined | string;
+        let activeClass: undefined | string;
         
         // extension possibilites
         let ctor: XHR;
-        active: number;
+        let active: number;
         function notify(isActive: boolean): void;
         function method(cfg: ActiveConfig): string;
         function url(cfg: ActiveConfig): string;
@@ -136,15 +142,17 @@ declare namespace Posterior {
         function end(): void;
     }
 
-    function Promiser(...input): Promise;
-    function Requester(...requestData): XHRPromise;
-    interface Requester extends InputConfig {
+    type Promiser = (...input: any[]) => Promise<T>;
+    interface RequesterBase extends InputConfigBase {
         cfg: RequesterConfig;
         config(name: string, value: any): any;
         extend(config: InputConfig, name: string): Requester;
     }
+    type RequesterFn = (...requestData: any[]) => XHRPromise;
+    type Requester = RequesterFn & RequesterBase;
     type Requirement = string | Requester | Promiser;
-    const api: (config: InputConfig, name?: string) => Requester;
+    
+    function api(config: InputConfig, name?: string): Requester;
     namespace api {
         // building
         function build(config: InputConfig, parent: RequesterConfig, name: string): Requester;
@@ -160,20 +168,22 @@ declare namespace Posterior {
         function extend(config: InputConfig, name: string): Requester;
 
         // requesting
-        function main(fn: Requester, args: [any]): XHRPromise | Promise;
+        function main(fn: Requester, args: [any]): XHRPromise | Promise<T>;
         function getAll(cfg: RequesterConfig, inheriting?: boolean): ActiveConfig;
         function process(cfg: ActiveConfig): void;
-        function promise(cfg: ActiveConfig, fn: Requester): XHRPromise | Promise;
-        function require(req: Requirement): Promise;
-        function follow(cfg: ActiveConfig, fn: Requester): XHRPromise | Promise;
+        function promise(cfg: ActiveConfig, fn: Requester): XHRPromise | Promise<T>;
+        function require(req: Requirement): Promise<T>;
+        function follow(cfg: ActiveConfig, fn: Requester): XHRPromise | Promise<T>;
 
         // resolving/combining config values
         function resolve(string: string, data: [any] | {}, cfg: ActiveConfig, consume: boolean | undefined): string;
         function copy(to: ActiveConfig, from: RequesterConfig): void;
         function log(args: [any], level: string): void;
         function combine(pval: any, val: any, cfg: ActiveConfig): any;
-        function combineFn(pfn: (any)=>any, fn: (any)=>any): (any)=>any;
+        function combineFn(pfn: Function, fn: Function): Function;
         function combineObject(pobj: {}, obj: {}): {};
         function type(val: any): string;
     }
 }
+
+export = Posterior;
