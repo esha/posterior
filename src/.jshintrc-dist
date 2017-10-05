@@ -12,7 +12,9 @@
   "boss": true,
   "eqnull": true,
   "browser": true,
+  "es5": true,
   "predef": [
-    "Promise"
+    "Promise",
+    "module"
   ]
 }
