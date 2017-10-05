@@ -61,7 +61,7 @@ Apart from the basic XHR encapsulation and handling, Posterior provides a number
 * 2016-05-23 [v0.16.0][] (add throttle:{key,ms} support)
 * 2017-03-27 [v0.17.0][] (distinguish subfunction from props via capitalization or @, bind then/catch functions to built cfg)
 * 2017-09-12 [v0.18.1][] (s/saveResult/singleton, handle JSON parse errors suppressed by browser, make presence of ```document``` optional)
-* 2017-09-29 [v0.19.1][] (initial TypeScript support)
+* 2017-10-05 [v0.19.2][] (initial TypeScript support, module export support)
 
 [v0.1.4]: https://github.com/esha/posterior/tree/0.1.4
 [v0.2.3]: https://github.com/esha/posterior/tree/0.2.3
@@ -80,4 +80,4 @@ Apart from the basic XHR encapsulation and handling, Posterior provides a number
 [v0.16.0]: https://github.com/esha/posterior/tree/0.16.0
 [v0.17.0]: https://github.com/esha/posterior/tree/0.17.0
 [v0.18.1]: https://github.com/esha/posterior/tree/0.18.1
-[v0.19.1]: https://github.com/esha/posterior/tree/0.19.1
+[v0.19.2]: https://github.com/esha/posterior/tree/0.19.2
