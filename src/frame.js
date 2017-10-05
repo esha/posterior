@@ -4,7 +4,7 @@
 
 var store = W.store || function(){},
     D = W.document,
-    Posterior = W.Posterior = function(config, name) {
+    Posterior = function(config, name) {
         if (typeof config === "string") {
             config = { url: config };
         }
@@ -16,5 +16,12 @@ var store = W.store || function(){},
 
 <%= content %>
 Posterior.version = "<%= pkg.version %>";
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Posterior;
+} else {
+    if (W.Posterior){ Posterior.conflict = W.Posterior; }
+    W.Posterior = Posterior;
+}
 
 })(window || this);
