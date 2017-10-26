@@ -25,7 +25,7 @@
   "license": "MIT",
   "scripts": {
     "test": "grunt test",
-    "prepublish": "npm run build && git commit -m \"$npm_package_version\" README.md *.json dist docs/posterior.js && git tag $npm_package_version && git push && git push --tags",
+    "prepublish": "npm run build && git commit -m \"$npm_package_version\" README.md *.json dist docs/posterior.js && git tag $npm_package_version && git push && git push --tags"
   },
   "dependencies": {
     "promise-polyfill": "^6.0.2",
