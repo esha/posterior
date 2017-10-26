@@ -1,5 +1,5 @@
-declare function Posterior<T>(config?: Posterior.InputConfig, name?: string): Posterior.Requester;
-declare namespace Posterior {
+export function Posterior<T>(config?: Posterior.InputConfig, name?: string): Posterior.Requester;
+export namespace Posterior {
     type XHREventHandler = (this: XHR, event: Event) => any;
     type T = any;
     type U = any;
@@ -186,4 +186,4 @@ declare namespace Posterior {
     }
 }
 
-export = Posterior;
+export default Posterior;
