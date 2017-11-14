@@ -27,7 +27,7 @@ export namespace Posterior {
         };
         username?: string;
         password?: string;
-        
+
         // behavior configuration
         auto?: boolean;
         cache?: boolean;
@@ -70,7 +70,7 @@ export namespace Posterior {
         loadstart?: XHREventHandler;
         loadend?: XHREventHandler;
         load?: XHREventHandler;
- 
+
         // response handlers and status code mapping
         responseData?: (this: XHR, data: any) => T | XHR;
         failure?: (this: ActiveConfig, status: number, xhr: XHR) => any;
@@ -90,7 +90,7 @@ export namespace Posterior {
         _private: InputConfig;
     }
     type RequesterConfig = RequesterConfigBase & InputConfig;
-    
+
     // one per call (flattened, filled, and called)
     interface ActiveConfigBase {
         _args: [any];
@@ -106,13 +106,13 @@ export namespace Posterior {
         // utilities
         function isData(data: any): boolean;
         function safeCopy<O>(object: O, copied: undefined | [string]): O;
-        
+
         // manual configuration
         const methodMap: {
             [METHOD: string]: string;
         };
         let activeClass: undefined | string;
-        
+
         // extension possibilites
         let ctor: XHR;
         let active: number;
@@ -151,7 +151,7 @@ export namespace Posterior {
     type RequesterFn = (...requestData: any[]) => XHRPromise;
     type Requester = RequesterFn & RequesterBase;
     type Requirement = string | Requester | Promiser;
-    
+
     function api(config: InputConfig, name?: string): Requester;
     namespace api {
         // building
@@ -162,7 +162,7 @@ export namespace Posterior {
 
         // utility
         function get(cfg: RequesterConfig, name: string, inheriting?: boolean): any;        
-        
+
         // user-facing (on all Requesters)
         function config(name: string, value: any): any;
         function extend(config: InputConfig, name: string): Requester;
