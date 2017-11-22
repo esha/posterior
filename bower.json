@@ -1,6 +1,6 @@
 {
   "name": "posterior",
-  "version": "0.19.3",
+  "version": "0.20.0",
   "main": "dist/posterior.js",
   "description": "Hierarchical configuration of JSON XHR communication for your APIs",
   "keywords": [
