@@ -17,36 +17,29 @@ export namespace Posterior {
 
     // one per call to Posterior()
     interface InputConfigBase {
+        name?: string | Meta<string>;
+        parent?: Posterior;
+
         // basic HTTP
-        name?: string;
-        url?: string;// must have follows, if no url
-        method?: string;// default is GET
-        mimeType?: string;
+        url?: string | Meta<string>;// must have follows, if no url
+        method?: string | Meta<string>;// default is GET
+        mimeType?: string | Meta<string>;
         headers?: {
-            [header: string]: string;
+            [header: string]: string | Meta<string>;
         };
-        username?: string;
-        password?: string;
+        username?: string | Meta<string>;
+        password?: string | Meta<string>;
 
         // behavior configuration
-        auto?: boolean;
-        cache?: boolean;
-        debug?: boolean;
-        retry?: boolean | {
-            wait?: number;
-            limit?: number;
-        };
-        throttle?: {
-            key: string,
-            ms: number
-        };
-        json?: boolean;
-        requires?: [Requirement];
-        follows?: string | {
-            source: Requester | Promiser;
-            path: string;
-        };
-        consumeData?: boolean;
+        auto?: boolean | Meta<boolean>;
+        cache?: boolean | Meta<boolean>;
+        debug?: boolean | Meta<boolean>;
+        retry?: Retry | Meta<Retry>;
+        throttle?: Throttle | Meta<Throttle>;
+        json?: boolean | Meta<boolean>;
+        requires?: [Requirement] | Meta<[Requirement]>;
+        follows?: Follows | Meta<Follows>;
+        consumeData?: boolean | Meta<boolean>;
 
         // handlers
         configure?(this: ActiveConfig, cfg: ActiveConfig): void;
@@ -55,21 +48,21 @@ export namespace Posterior {
         catch?(handler: (this: ActiveConfig, error: any, xhr?: XHR) => void): Promise<U>;
 
         // XHR specific configuration
-        async?: boolean;
+        async?: boolean | Meta<boolean>;
         responseType?: XMLHttpRequestResponseType;
-        timeout?: number | XHREventHandler;
-        withCredentials?: boolean;
-        msCaching?: string;
-        requestedWith?: string;
+        timeout?: Timeout | Meta<Timeout>;
+        withCredentials?: boolean | Meta<boolean>;
+        msCaching?: string | Meta<string>;
+        requestedWith?: string | Meta<string>;
 
         // request handlers
         requestData?: (data: any) => undefined | any;
-        onreadystatechange?: XHREventHandler;
-        error?: XHREventHandler;
-        //timeout?: XHREventHandler;
-        loadstart?: XHREventHandler;
-        loadend?: XHREventHandler;
-        load?: XHREventHandler;
+        onreadystatechange?: XHREventHandler | Meta<XHREventHandler>;
+        error?: XHREventHandler | Meta<XHREventHandler>;
+        //timeout?: XHREventHandler | Meta<XHREventHandler>;
+        loadstart?: XHREventHandler | Meta<XHREventHandler>;
+        loadend?: XHREventHandler | Meta<XHREventHandler>;
+        load?: XHREventHandler | Meta<XHREventHandler>;
 
         // response handlers and status code mapping
         responseData?: (this: XHR, data: any) => T | XHR;
@@ -79,6 +72,26 @@ export namespace Posterior {
         // status code mapping and mapping handlers
         [statusCode: number]: number | ((xhr: XHR) => number);
     };
+    type Retry = boolean | {
+        wait?: number;
+        limit?: number;
+    };
+    type Throttle = {
+        key: string,
+        ms: number
+    };
+    type Follows = string | {
+        source: Requester | Promiser;
+        path: string;
+    };
+    type Timeout = number | XHREventHandler;
+    interface Meta<T> {
+        name?: string;
+        fullname?: string;
+        value: T;
+        private?: boolean;
+        root?: boolean;
+    }
 
     // one per Requester (structured)
     interface RequesterConfigBase {
@@ -87,7 +100,6 @@ export namespace Posterior {
         // internals
         _fn: Requester;
         _parent: RequesterConfig | null;
-        _private: InputConfig;
     }
     type RequesterConfig = RequesterConfigBase & InputConfig;
 
@@ -161,7 +173,7 @@ export namespace Posterior {
         function getter(fn: Requester, name: string): void;
 
         // utility
-        function get(cfg: RequesterConfig, name: string, inheriting?: boolean): any;        
+        function get(cfg: RequesterConfig, name: string, inheriting?: boolean): any;
 
         // user-facing (on all Requesters)
         function config(name: string, value: any): any;

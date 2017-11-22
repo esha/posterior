@@ -32,7 +32,8 @@ Test assertions:
             fn = API.build(config);
         equal(typeof fn, 'function', 'should return a function');
         ok(fn.cfg, 'should have .cfg');
-        ok(fn.cfg._private, '.cfg should have ._private');
+        equal(typeof fn.cfg.name, "string", '.cfg should have a name');
+        ok('_parent' in fn.cfg, '.cfg should have _parent defined');
         equal(fn.cfg._fn, fn, '.cfg should have ._fn');
     });
 
@@ -104,50 +105,46 @@ Test assertions:
     test('API.set', function() {
         expect(9);
         var fn = function(){},
-            cfg = {_fn: fn, _private:{}};
+            cfg = {_fn: fn};
         fn.cfg = cfg;
 
         API.set(cfg, 'foo', true);
-        strictEqual(cfg.foo, true);
+        strictEqual(cfg.foo.value, true);
 
         API.set(cfg, 'foo', function() {
-            strictEqual(this, cfg);
+            strictEqual(this, cfg, 'value fn context should be cfg');
         });
-        cfg.foo();
+        cfg.foo.value();
 
-        API.set(cfg, '.prop', 'bar');
-        strictEqual(fn.prop, 'bar');
         API.set(cfg, 'prop2', 'bar2');
         strictEqual(fn.prop2, 'bar2');
 
         var build = API.build,
             subcfg = {};
         API.build = function(v, o) {
-            strictEqual(o, cfg);
-            equal(v, subcfg);
+            strictEqual(o, cfg, 'build should get cfg as 2nd arg');
+            equal(v, subcfg, 'build should get subcfg as 1st arg');
         };
         API.set(cfg, 'Sub', subcfg);
         API.set(cfg, '@sub', subcfg);
         API.build = build;
 
         API.set(cfg, '_priv', 'ate');
-        strictEqual(cfg._private.priv, 'ate');
+        strictEqual(cfg.priv.private, true);
+        strictEqual(cfg.priv.value, 'ate');
+
+        //TODO: test roots
     });
 
     var cfg = {
-        _private: {
-            priv: 'er',
-        },
-        '!over': 'ride',
-        priv: 'ate',
-        norm: 'ive',
+        priv: { private: true, value: 'ateer' },
+        over: { root: true, value: 'ride' },
+        norm: { value: 'ive' },
         _parent: {
-            _private: {
-                un: 'defined'
-            },
-            over: 'and out',
-            norm: 'at',
-            pare: 'ntal'
+            un: { private: true, value: 'defined' },
+            over: { value: 'and out' },
+            norm: { value: 'at' },
+            pare: { value: 'ntal' }
         }
     };
 
