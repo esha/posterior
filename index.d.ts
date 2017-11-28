@@ -42,10 +42,9 @@ export namespace Posterior {
         consumeData?: boolean | Meta<boolean>;
 
         // handlers
-        configure?(this: ActiveConfig, cfg: ActiveConfig): void;
-        then?(this: ActiveConfig, then: (value: T) => U): Promise<U>;
-        catch?(handler: (this: ActiveConfig, error: any) => U | Promise<U>): Promise<U>;
-        catch?(handler: (this: ActiveConfig, error: any, xhr?: XHR) => void): Promise<U>;
+        configure?: ((this: ActiveConfig, cfg: ActiveConfig) => void) | Meta<Function>;
+        then?: ((this: ActiveConfig, then: (value: T) => U) => Promise<U>) | Meta<Function>;
+        catch?: ((handler: (this: ActiveConfig, error: any, xhr?: XHR) => void | U | Promise<U>) => Promise<U>) | Meta<Function>;
 
         // XHR specific configuration
         async?: boolean | Meta<boolean>;
@@ -65,12 +64,20 @@ export namespace Posterior {
         load?: XHREventHandler | Meta<XHREventHandler>;
 
         // response handlers and status code mapping
-        responseData?: (this: XHR, data: any) => T | XHR;
-        failure?: (this: ActiveConfig, status: number, xhr: XHR) => any;
+        responseData?: ((this: XHR, data: any) => T | XHR) | Meta<Function>;
+        failure?: ((this: ActiveConfig, status: number, xhr: XHR) => any) | Meta<Function>;
     }
-    type InputConfig = InputConfigBase & {
+    interface StatusCodeMapping {
         // status code mapping and mapping handlers
-        [statusCode: number]: number | ((xhr: XHR) => number);
+        [statusCode: number]: number | ((xhr: XHR) => number) | Meta<number> | Meta<Function>;
+    }
+    type InputConfig = InputConfigBase & StatusCodeMapping & {
+        Children?: {
+            [sub: string]: InputConfig | Meta<InputConfig>;
+        };
+        Properties?: {
+            [custom: string]: any | Meta<any>;
+        };
     };
     type Retry = boolean | {
         wait?: number;
@@ -101,6 +108,7 @@ export namespace Posterior {
         _fn: Requester;
         _parent: RequesterConfig | null;
     }
+    //TODO: find way to declare only Meta<T> versions from InputConfig
     type RequesterConfig = RequesterConfigBase & InputConfig;
 
     // one per call (flattened, filled, and called)
@@ -169,8 +177,15 @@ export namespace Posterior {
         // building
         function build(config: InputConfig, parent: RequesterConfig, name: string): Requester;
         function debug(name: string, fn: Requester): Requester;
+        function setAll(cfg: InputConfig, config: RequesterConfig): void;
         function set(cfg: RequesterConfig, prop: string, value: any, parentName: string): void;
         function getter(fn: Requester, name: string): void;
+        const meta: {
+            chars: [string];
+            _: (meta: Meta<any>, api?: Requester) => void;
+            '!': (meta: Meta<any>, api?: Requester) => void;
+            '@': (meta: Meta<any>, api?: Requester) => void;
+        };
 
         // utility
         function get(cfg: RequesterConfig, name: string, inheriting?: boolean): any;

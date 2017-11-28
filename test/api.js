@@ -102,6 +102,13 @@ Test assertions:
         deepEqual(API.combine(1, [2]), [1,2]);
     });
 
+    test('API.setAll', function() {
+        var cfg = { _fn: function(){} },
+            config = { Children: { foo: 'bar' }};
+        API.setAll(cfg, config);
+        equal(cfg.foo.value, 'bar');
+    });
+
     test('API.set', function() {
         expect(9);
         var fn = function(){},
@@ -165,6 +172,18 @@ Test assertions:
             norm: 'ative',
             pare: 'ntal'
         });
+    });
+
+    test('API.elevate', function() {
+        var config = {
+            Children: { url: 'test', method: 'POST' },
+            Properties: { num: 42 }
+        };
+        API.elevate('Properties', config);
+        API.elevate('Children', config);
+        equal(config.url, 'test');
+        equal(config.method, 'POST');
+        equal(config.num, 42);
     });
 
     test('API.resolve', function() {
