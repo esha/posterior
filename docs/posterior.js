@@ -1,4 +1,4 @@
-/*! posterior - v0.20.0 - 2017-11-22
+/*! posterior - v0.21.0 - 2017-11-28
 * http://esha.github.io/posterior/
 * Copyright (c) 2017 ESHA Research; Licensed  */
 
@@ -590,8 +590,18 @@ API.getter = function(fn, name) {
 };
 
 API.setAll = function(cfg, config) {
+    API.elevate('Children', config);
+    API.elevate('Properties', config);
     for (var prop in config) {
         API.set(cfg, prop, config[prop]);
+    }
+};
+API.elevate = function(key, config) {
+    if (key in config) {
+        var structured = config[key];
+        for (var prop in structured) {
+            config[prop] = structured[prop];
+        }
     }
 };
 API.set = function(cfg, prop, value) {
@@ -608,7 +618,7 @@ API.set = function(cfg, prop, value) {
         prop = '@' + prop;
     }
     // identify private, root, and extension config
-    while (metaChars.indexOf(prop.charAt(0)) >= 0) {
+    while (API.meta.chars.indexOf(prop.charAt(0)) >= 0) {
         API.meta[prop.charAt(0)](meta, api);
         prop = prop.substring(1);
     }
@@ -626,11 +636,11 @@ API.set = function(cfg, prop, value) {
     }
     cfg[prop] = meta;
 };
-var metaChars = '!@_'.split('');
 function isCaps(s) {
     return s.charAt(0) !== s.charAt(0).toLowerCase();
 }
 API.meta = {
+    chars: '!@_'.split(''),
     _: function(meta) {
         meta.private = true;
     },
@@ -721,7 +731,7 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "0.20.0";
+Posterior.version = "0.21.0";
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Posterior;
