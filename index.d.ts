@@ -18,7 +18,7 @@ export namespace Posterior {
     // one per call to Posterior()
     interface InputConfigBase {
         name?: string | Meta<string>;
-        parent?: Posterior;
+        parent?: Posterior.Requester;
 
         // basic HTTP
         url?: string | Meta<string>;// must have follows, if no url
