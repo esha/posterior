@@ -32,6 +32,7 @@ export namespace Posterior {
 
         // behavior configuration
         auto?: boolean | Meta<boolean>;
+        singleton?: boolean | Meta<boolean>;
         cache?: boolean | Meta<boolean>;
         debug?: boolean | Meta<boolean>;
         retry?: Retry | Meta<Retry>;
