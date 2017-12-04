@@ -2,7 +2,7 @@
   "name": "posterior",
   "title": "Posterior",
   "description": "Hierarchical, declarative configuration of Promise-based, JSON-ready, XHR communication with remote APIs",
-  "version": "0.21.1",
+  "version": "0.21.2",
   "homepage": "http://esha.github.io/posterior/",
   "author": {
     "name": "ESHA Research",
