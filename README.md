@@ -84,4 +84,4 @@ Apart from the basic XHR encapsulation and handling, Posterior provides a number
 [v0.18.1]: https://github.com/esha/posterior/tree/0.18.1
 [v0.19.3]: https://github.com/esha/posterior/tree/0.19.3
 [v0.20.0]: https://github.com/esha/posterior/tree/0.20.0
-[v0.21.2]: https://github.com/esha/posterior/tree/0.21.2
+[v0.21.3]: https://github.com/esha/posterior/tree/0.21.3

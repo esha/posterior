@@ -1,4 +1,4 @@
-/*! posterior - v0.21.2 - 2017-12-04
+/*! posterior - v0.21.3 - 2017-12-04
 * http://esha.github.io/posterior/
 * Copyright (c) 2017 ESHA Research; Licensed  */
 
@@ -411,11 +411,7 @@ API.build = function(config, parent, name) {
 };
 
 API.extend = function(config, name) {
-    var fn = API.build(config, this.cfg, name);
-    if (name) {
-        this[name] = fn;
-    }
-    return fn;
+    return this[name||'ext'] = API.build(config, this.cfg, name);
 };
 
 API.main = function(fn, args) {
@@ -735,7 +731,7 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "0.21.2";
+Posterior.version = "0.21.3";
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Posterior;
