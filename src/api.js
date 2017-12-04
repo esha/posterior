@@ -67,7 +67,7 @@ API.build = function(config, parent, name) {
 };
 
 API.extend = function(config, name) {
-    return API.build(config, this.cfg, name);
+    return this[name||'ext'] = API.build(config, this.cfg, name);
 };
 
 API.main = function(fn, args) {
