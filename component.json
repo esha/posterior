@@ -2,7 +2,7 @@
   "name": "posterior",
   "repo": "esha/posterior",
   "description": "Hierarchical configuration of JSON XHR communication for your APIs",
-  "version": "0.21.3",
+  "version": "0.21.4",
   "keywords": [
     "JSON",
     "AJAX",
