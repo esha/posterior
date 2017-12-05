@@ -1,6 +1,6 @@
 export function Posterior<T>(config?: Posterior.InputConfig, name?: string): Posterior.Requester;
 export namespace Posterior {
-    type XHREventHandler = (this: XHR, event: Event) => any;
+    type XHREventHandler = (this: XHR, event: Event) => any | Function;
     type T = any;
     type U = any;
 
@@ -43,9 +43,9 @@ export namespace Posterior {
         consumeData?: boolean | Meta<boolean>;
 
         // handlers
-        configure?: ((this: ActiveConfig, cfg: ActiveConfig) => void) | Meta<Function>;
-        then?: ((this: ActiveConfig, then: (value: T) => U) => Promise<U>) | Meta<Function>;
-        catch?: ((handler: (this: ActiveConfig, error: any, xhr?: XHR) => void | U | Promise<U>) => Promise<U>) | Meta<Function>;
+        configure?: ((this: ActiveConfig, cfg: ActiveConfig) => void) | Function | Meta<Function>;
+        then?: ((this: ActiveConfig, then: (value: T) => U) => Promise<U>) | Function | Meta<Function>;
+        catch?: ((handler: (this: ActiveConfig, error: any, xhr?: XHR) => void | U | Promise<U>) => Promise<U>) | Function | Meta<Function>;
 
         // XHR specific configuration
         async?: boolean | Meta<boolean>;
