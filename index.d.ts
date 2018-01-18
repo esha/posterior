@@ -1,17 +1,16 @@
-export function Posterior<T>(config?: Posterior.InputConfig, name?: string): Posterior.Requester;
-export namespace Posterior {
+declare namespace Posterior {
     type XHREventHandler = (this: XHR, event: Event) => any | Function;
     type T = any;
     type U = any;
 
-    interface XHR extends XMLHttpRequest {
+    export interface XHR extends XMLHttpRequest {
         readonly cfg: RequesterConfig;
         readonly responseObject: {};
         readonly responseHeaders: {
             [header: string]: string;
         }
     }
-    interface XHRPromise extends Promise<T> {
+    export interface XHRPromise extends Promise<T> {
         readonly xhr: XHR;
     }
 
@@ -72,7 +71,7 @@ export namespace Posterior {
         // status code mapping and mapping handlers
         [statusCode: number]: number | ((xhr: XHR) => number) | Meta<number> | Meta<Function>;
     }
-    type InputConfig = InputConfigBase & StatusCodeMapping & {
+    export type InputConfig = InputConfigBase & StatusCodeMapping & {
         Children?: {
             [sub: string]: InputConfig | Meta<InputConfig>;
         };
@@ -80,20 +79,20 @@ export namespace Posterior {
             [custom: string]: any | Meta<any>;
         };
     };
-    type Retry = boolean | {
+    export type Retry = boolean | {
         wait?: number;
         limit?: number;
     };
-    type Throttle = {
+    export type Throttle = {
         key: string,
         ms: number
     };
-    type Follows = string | {
+    export type Follows = string | {
         source: Requester | Promiser;
         path: string;
     };
-    type Timeout = number | XHREventHandler;
-    interface Meta<T> {
+    export type Timeout = number | XHREventHandler;
+    export interface Meta<T> {
         name?: string;
         fullname?: string;
         value: T;
@@ -110,7 +109,7 @@ export namespace Posterior {
         _parent: RequesterConfig | null;
     }
     //TODO: find way to declare only Meta<T> versions from InputConfig
-    type RequesterConfig = RequesterConfigBase & InputConfig;
+    export type RequesterConfig = RequesterConfigBase & InputConfig;
 
     // one per call (flattened, filled, and called)
     interface ActiveConfigBase {
@@ -118,7 +117,7 @@ export namespace Posterior {
         data: [any] | {};
         _singletonResult?: T;
     }
-    type ActiveConfig = ActiveConfigBase & RequesterConfig;
+    export type ActiveConfig = ActiveConfigBase & RequesterConfig;
 
     const version: string;
 
@@ -163,15 +162,15 @@ export namespace Posterior {
         function end(): void;
     }
 
-    type Promiser = (...input: any[]) => Promise<T>;
+    export type Promiser = (...input: any[]) => Promise<T>;
     interface RequesterBase extends InputConfigBase {
         cfg: RequesterConfig;
         config(name: string, value: any): any;
         extend(config: InputConfig, name: string): Requester;
     }
     type RequesterFn = (...requestData: any[]) => XHRPromise;
-    type Requester = RequesterFn & RequesterBase;
-    type Requirement = string | Requester | Promiser;
+    export type Requester = RequesterFn & RequesterBase;
+    export type Requirement = string | Requester | Promiser;
 
     function api(config: InputConfig, name?: string): Requester;
     namespace api {
@@ -214,4 +213,6 @@ export namespace Posterior {
     }
 }
 
-export default Posterior;
+declare function Posterior<T>(config?: Posterior.InputConfig, name?: string): Posterior.Requester;
+
+export = Posterior;
