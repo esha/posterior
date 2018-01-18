@@ -64,6 +64,7 @@ Apart from the basic XHR encapsulation and handling, Posterior provides a number
 * 2017-10-26 [v0.19.3][] (initial TypeScript support, module export support)
 * 2017-11-22 [v0.20.0][] (support property metadata as structured object--not just key prefixes--to be more TypeScript friendly)
 * 2017-12-04 [v0.21.4][] (add 'Children' and 'Properties' subconfigs, since TypeScript can't handle mix of known and unknown keys with typed values)
+* 2018-01-18 [v0.21.5][] (change index.d.ts to match format that seems to be working for store2 and moment.js)
 
 [v0.1.4]: https://github.com/esha/posterior/tree/0.1.4
 [v0.2.3]: https://github.com/esha/posterior/tree/0.2.3
@@ -85,3 +86,4 @@ Apart from the basic XHR encapsulation and handling, Posterior provides a number
 [v0.19.3]: https://github.com/esha/posterior/tree/0.19.3
 [v0.20.0]: https://github.com/esha/posterior/tree/0.20.0
 [v0.21.4]: https://github.com/esha/posterior/tree/0.21.4
+[v0.21.5]: https://github.com/esha/posterior/tree/0.21.5
