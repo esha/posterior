@@ -275,7 +275,7 @@ API.set = function(cfg, prop, value) {
     }
     // identify private, root, and extension config
     while (API.meta.chars.indexOf(prop.charAt(0)) >= 0) {
-        API.meta[prop.charAt(0)](meta, api);
+        API.meta[prop.charAt(0)](meta, cfg);
         prop = prop.substring(1);
     }
     if (typeof meta.value === "function") {
@@ -303,10 +303,10 @@ API.meta = {
     '!': function(meta) {
         meta.root = true;
     },
-    '@': function(meta, api) {
+    '@': function(meta, cfg) {
         meta.root = true;// extensions are self-combining, so act as roots
-        api[meta.name] = meta.value =
-            API.build(meta.value, api.cfg, meta.name);
+        cfg._fn[meta.name] = meta.value =
+            API.build(meta.value, cfg, meta.name);
     }
 };
 

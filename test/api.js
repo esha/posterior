@@ -316,6 +316,16 @@ Test assertions:
         });
     });
 
+    test('ensure parent gets set via nested subcfg', function() {
+        var base = API({
+            url: 'http://esha.com',
+            Sub: {
+                url: '/test'
+            }
+        });
+        equal(base.Sub.config('url'), 'http://esha.com/test');
+    });
+
     test('\'parent\' property', function() {
         var base = API({ url: '/base' }, 'base'),
             sub = API({ url: '/sub', parent: base }, 'sub');
