@@ -165,8 +165,8 @@ declare namespace Posterior {
     export type Promiser = (...input: any[]) => Promise<T>;
     interface RequesterBase extends InputConfigBase {
         cfg: RequesterConfig;
-        config(name: string, value: any): any;
-        extend(config: InputConfig, name: string): Requester;
+        config(name: string, value?: any): any;
+        extend(config: InputConfig, name?: string): Requester;
     }
     type RequesterFn = (...requestData: any[]) => XHRPromise;
     export type Requester = RequesterFn & RequesterBase;
