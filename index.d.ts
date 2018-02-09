@@ -167,7 +167,9 @@ declare namespace Posterior {
     interface RequesterBase extends InputConfigBase {
         cfg: RequesterConfig;
         config(name: string, value?: any): any;
-        extend(config: InputConfig, name?: string): Requester;
+        extend(config: InputConfig, name?: string): Requester & {
+            [Sub: string]: Requester
+        };
     }
     type RequesterFn = (...requestData: any[]) => XHRPromise;
     export type Requester = RequesterFn & RequesterBase;
@@ -193,7 +195,9 @@ declare namespace Posterior {
 
         // user-facing (on all Requesters)
         function config(name: string, value: any): any;
-        function extend(config: InputConfig, name: string): Requester;
+        function extend(config: InputConfig, name: string): Requester & {
+            [Sub: string]: Requester
+        };
 
         // requesting
         function main(fn: Requester, args: [any]): XHRPromise | Promise<T>;
