@@ -55,7 +55,7 @@ declare namespace Posterior {
         requestedWith?: string | Meta<string>;
 
         // request handlers
-        requestData?: (data: any) => undefined | any;
+        requestData?: (this: ActiveConfig, data: any) => undefined | any;
         onreadystatechange?: XHREventHandler | Meta<XHREventHandler>;
         error?: XHREventHandler | Meta<XHREventHandler>;
         //timeout?: XHREventHandler | Meta<XHREventHandler>;
@@ -64,7 +64,7 @@ declare namespace Posterior {
         load?: XHREventHandler | Meta<XHREventHandler>;
 
         // response handlers and status code mapping
-        responseData?: ((this: XHR, data: any) => T | XHR) | Meta<Function>;
+        responseData?: ((this: ActiveConfig, data: any, xhr: XHR) => T | undefined) | Meta<Function>;
         failure?: ((this: ActiveConfig, status: number, xhr: XHR) => any) | Meta<Function>;
     }
     interface StatusCodeMapping {

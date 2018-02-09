@@ -110,13 +110,14 @@ Test assertions:
     Object.defineProperties(FakeXHR.prototype, XHR.properties);
 
     test('XHR.main', function() {
-        expect(9);
+        expect(10);
         XHR.ctor = FakeXHR;
         var promise;
         promise = XHR({
             url: '/main',
-            responseData: function(res) {
-                ok(this instanceof FakeXHR, 'context should be xhr');
+            responseData: function(res, xhr) {
+                ok(this instanceof Object && 'url' in this, 'context should be cfg');
+                ok(xhr instanceof FakeXHR, '2nd arg should be xhr');
                 res.altered = true;
             },
             response: '{"json":true}',
