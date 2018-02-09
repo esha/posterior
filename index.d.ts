@@ -141,7 +141,7 @@ declare namespace Posterior {
         function url(cfg: ActiveConfig): string;
         function key(cfg: ActiveConfig): string;
         function cache(xhr: XHR): XHR;
-        function remember(stage: string, xhr: XHR, cfg: ActiveConfig, data: any);
+        function remember(stage: string, xhr: XHR, cfg: ActiveConfig, data: any): void;
 
         // override at your own risk
         function promise(xhr: XHR, cfg: ActiveConfig): Promise<T>;
