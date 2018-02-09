@@ -1,4 +1,4 @@
-/*! posterior - v0.21.6 - 2018-01-19
+/*! posterior - v0.22.0 - 2018-02-09
 * http://esha.github.io/posterior/
 * Copyright (c) 2018 ESHA Research; Licensed  */
 
@@ -120,16 +120,25 @@ XHR.promise = function(xhr, cfg) {
         var fail = function(e) {
             if (cfg.retry) {
                 XHR.retry(cfg, cfg.retry, events, fail);
+            } else if (cfg.debug === 'xhr') {
+                XHR.remember('response', xhr, cfg, e);
+                reject(e);
             } else {
                 reject(xhr.error = e);
             }
         },
+        succeed = cfg.debug === 'xhr' ?
+            function(result) {
+                XHR.remember('response', xhr, cfg, result);
+                resolve(result);
+            } :
+            resolve,
         events = {
             error: fail,
             timeout: fail,
             loadstart: XHR.start,
             loadend: XHR.end,
-            load: XHR.load(cfg, resolve, fail)
+            load: XHR.load(cfg, succeed, fail)
         };
         XHR[cfg.throttle ? 'throttle' : 'run'](xhr, cfg, events, fail);
     });
@@ -208,7 +217,7 @@ XHR.load = function(cfg, resolve, reject) {
                     reject('Presumed syntax error in JSON response, suppressed by your browser.');
                 } else {
                     if (cfg.responseData && XHR.isData(data)) {
-                        var ret = cfg.responseData.call(xhr, data);
+                        var ret = cfg.responseData(data, xhr);
                         data = ret === undefined ? data : ret;
                     }
                     resolve(XHR.isData(data) ? data : xhr);
@@ -318,6 +327,20 @@ XHR.cache = function(xhr) {
     var cfg = xhr.cfg;
     store(XHR.key(cfg), XHR.safeCopy(xhr), cfg.cache);
     return xhr;
+};
+XHR.remember = function(stage, xhr, cfg, data) {
+    var fn = cfg._fn;
+    fn.debug = {
+        stage: stage,
+        method: cfg.method || 'GET',
+        status: xhr.status,
+        url: API.resolve(cfg.url, cfg.data, null, false),
+        requestHeaders: cfg.headers,
+        requestData: cfg.data,
+        responseHeaders: xhr.responseHeaders,
+        responseData: data
+    };
+    store(cfg.name+'.debug', fn.debug);
 };
 XHR.safeCopy = function(object, copied) {
     var copy = {};
@@ -731,7 +754,7 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "0.21.6";
+Posterior.version = "0.22.0";
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Posterior;
