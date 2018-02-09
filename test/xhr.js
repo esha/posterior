@@ -492,4 +492,32 @@ Test assertions:
         window.setTimeout = actualSetTimeout;
     });
 
+    test('XHR.remember', function() {
+        var cfg = {
+            name: 'Test',
+            url: '/test',
+            _fn: function Test(){},
+        };
+        XHR.remember('response', new FakeXHR(), cfg, 'value');
+        var testDebug = function(debug, checkDefined) {
+            ok(debug instanceof Object, 'should have debug object');
+            equal(typeof debug.stage, 'string', 'debug.stage should be string');
+            equal(typeof debug.method, "string", "debug.method should be string");
+            equal(typeof debug.url, "string", "debug.url should be string");
+            if (checkDefined) {
+                ok('status' in debug, "status should be defined");
+                ok('requestHeaders' in debug, 'requestHeaders should be defined');
+                ok('requestData' in debug, 'requestData should be defined');
+                ok('responseHeaders' in debug, 'responseHeaders should be defined');
+            }
+            equal(debug.responseData, 'value', 'responseData should be value');
+        };
+        testDebug(cfg._fn.debug);
+        ok(store.has(cfg.name + ".debug"), "debug should be stored");
+        testDebug(store.get(cfg.name+".debug"), false);
+
+        // clean up
+        store.remove(cfg.name+'.debug');
+    });
+
 }());

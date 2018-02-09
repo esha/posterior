@@ -101,16 +101,25 @@ XHR.promise = function(xhr, cfg) {
         var fail = function(e) {
             if (cfg.retry) {
                 XHR.retry(cfg, cfg.retry, events, fail);
+            } else if (cfg.debug === 'xhr') {
+                XHR.remember('response', xhr, cfg, e);
+                reject(e);
             } else {
                 reject(xhr.error = e);
             }
         },
+        succeed = cfg.debug === 'xhr' ?
+            function(result) {
+                XHR.remember('response', xhr, cfg, result);
+                resolve(result);
+            } :
+            resolve,
         events = {
             error: fail,
             timeout: fail,
             loadstart: XHR.start,
             loadend: XHR.end,
-            load: XHR.load(cfg, resolve, fail)
+            load: XHR.load(cfg, succeed, fail)
         };
         XHR[cfg.throttle ? 'throttle' : 'run'](xhr, cfg, events, fail);
     });
@@ -299,6 +308,20 @@ XHR.cache = function(xhr) {
     var cfg = xhr.cfg;
     store(XHR.key(cfg), XHR.safeCopy(xhr), cfg.cache);
     return xhr;
+};
+XHR.remember = function(stage, xhr, cfg, data) {
+    var fn = cfg._fn;
+    fn.debug = {
+        stage: stage,
+        method: cfg.method || 'GET',
+        status: xhr.status,
+        url: API.resolve(cfg.url, cfg.data, null, false),
+        requestHeaders: cfg.headers,
+        requestData: cfg.data,
+        responseHeaders: xhr.responseHeaders,
+        responseData: data
+    };
+    store(cfg.name+'.debug', fn.debug);
 };
 XHR.safeCopy = function(object, copied) {
     var copy = {};

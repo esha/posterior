@@ -33,7 +33,7 @@ declare namespace Posterior {
         auto?: boolean | Meta<boolean>;
         singleton?: boolean | Meta<boolean>;
         cache?: boolean | Meta<boolean>;
-        debug?: boolean | Meta<boolean>;
+        debug?: boolean | string | Meta<boolean | string>;
         retry?: Retry | Meta<Retry>;
         throttle?: Throttle | Meta<Throttle>;
         json?: boolean | Meta<boolean>;
@@ -141,6 +141,7 @@ declare namespace Posterior {
         function url(cfg: ActiveConfig): string;
         function key(cfg: ActiveConfig): string;
         function cache(xhr: XHR): XHR;
+        function remember(stage: string, xhr: XHR, cfg: ActiveConfig, data: any);
 
         // override at your own risk
         function promise(xhr: XHR, cfg: ActiveConfig): Promise<T>;
