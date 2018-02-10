@@ -42,6 +42,38 @@ var API = Posterior.api = function(config, name) {
     return API.build(config, parent, name);
 };
 
+// start exposed functions
+
+API.extend = function(config, name) {
+  return (this[name || "ext"] = API.build(config, this.cfg, name || "ext"));
+};
+
+API.config = function(name, value) {
+  return name
+    ? value === undefined
+        ? API.get(this.cfg, name)
+        : API.set(this.cfg, name, value)
+    : API.getAll(this.cfg);
+};
+
+API.get = function(cfg, name, inheriting) {
+  var meta = cfg[name];
+  // if no non-private prop
+  if (!meta || (inheriting && meta.private)) {
+    // oh, and if there's a parent too
+    return cfg._parent && API.get(cfg._parent, name, true);
+  }
+  if (meta) {
+    if (meta.root || !cfg._parent) {
+      return meta.value;
+    }
+    return API.combine(API.get(cfg._parent, name, true), meta.value, cfg);
+  }
+};
+
+// end exposed functions
+// start build-time functions
+
 API.build = function(config, parent, name) {
     var fn = function() {
         return API.main(fn, arguments);
@@ -66,9 +98,113 @@ API.build = function(config, parent, name) {
     return fn;
 };
 
-API.extend = function(config, name) {
-    return this[name||'ext'] = API.build(config, this.cfg, name||'ext');
+API.setAll = function(cfg, config) {
+  API.elevate("Children", config);
+  API.elevate("Properties", config);
+  for (var prop in config) {
+    API.set(cfg, prop, config[prop]);
+  }
 };
+
+API.elevate = function(key, config) {
+  if (key in config) {
+    var structured = config[key];
+    for (var prop in structured) {
+      config[prop] = structured[prop];
+    }
+  }
+};
+
+API.set = function(cfg, prop, value) {
+  var api = cfg._fn,
+    meta = typeof value === "object" && "value" in value
+      ? value
+      : { value: value };
+  meta.name = prop;
+  meta.fullname = cfg._parent ? cfg._parent.name + "." + prop : prop;
+  // don't require @ for extensions
+  if (typeof meta.value === "object" && isCaps(prop)) {
+    prop = "@" + prop;
+  }
+  // identify private, root, and extension config
+  while (API.meta.chars.indexOf(prop.charAt(0)) >= 0) {
+    API.meta[prop.charAt(0)](meta, cfg);
+    prop = prop.substring(1);
+  }
+  if (typeof meta.value === "function") {
+    if (!meta.value.cfg) {
+      // if not an extension/sub, bind to cfg
+      meta.value = meta.value.bind(cfg);
+    }
+    if (API.get(cfg, "debug")) {
+      // add logging
+      meta.value = API.debug(meta.name, meta.value);
+    }
+  }
+  // let config props be accessed from the api function
+  if (!(prop in api)) {
+    API.getter(api, prop);
+  }
+  cfg[prop] = meta;
+};
+function isCaps(s) {
+  return s.charAt(0) !== s.charAt(0).toLowerCase();
+}
+
+API.meta = {
+  chars: "!@_".split(""),
+  _: function(meta) {
+    meta.private = true;
+  },
+  "!": function(meta) {
+    meta.root = true;
+  },
+  "@": function(meta, cfg) {
+    meta.root = true; // extensions are self-combining, so act as roots
+    cfg._fn[meta.name] = meta.value = API.build(meta.value, cfg, meta.name);
+  }
+};
+
+API.getter = function(fn, name) {
+  try {
+    Object.defineProperty(fn, name, {
+      get: function() {
+        return API.get(fn.cfg, name);
+      },
+      configurable: true
+    });
+  } catch (e) {} // ignore failures
+};
+
+API.log = function(args, level) {
+  var console = W.console, log = console && console[level || "log"];
+  if (log) {
+    log.apply(console, args);
+  }
+};
+
+API.debug = function(name, fn) {
+  return function debug(arg) {
+    var args;
+    try {
+      var ret = fn.apply(this, arguments);
+      if (ret !== undefined && ret !== arg) {
+        args = [name + "("];
+        args.push.apply(args, arguments);
+        args.push(") resolved to ", ret);
+        API.log(args, "debug");
+      }
+      return ret;
+    } catch (e) {
+      args = Array.prototype.concat.apply([name, e], arguments);
+      API.log(args, "error");
+      throw e;
+    }
+  };
+};
+
+// end build-time functions
+// start call-time functions
 
 API.main = function(fn, args) {
     if (fn.cfg._singletonResult) {
@@ -90,6 +226,35 @@ API.main = function(fn, args) {
         });
     }
     return promise;
+};
+
+API.getAll = function(cfg, inheriting) {
+  var flat = cfg._parent ? API.getAll(cfg._parent, true) : {};
+  for (var prop in cfg) {
+    // don't copy _fn, or _parent
+    if (prop.charAt(0) !== "_") {
+      var meta = cfg[prop];
+      if (meta.root || prop === "name") {
+        // name's are pre-combined
+        flat[prop] = meta.value;
+      } else if (!inheriting || !meta.private) {
+        flat[prop] = API.combine(flat[prop], meta.value, flat);
+      }
+    }
+  }
+  return flat;
+};
+
+API.process = function(cfg) {
+  if (cfg.configure) {
+    cfg.configure(cfg);
+  }
+  for (var name in cfg) {
+    var value = cfg[name];
+    if (typeof value === "string") {
+      value = cfg[name] = API.resolve(value, cfg.data, cfg, cfg.consumeData);
+    }
+  }
 };
 
 API.promise = function(cfg, fn) {
@@ -140,26 +305,6 @@ API.require = function(req) {
     }
 };
 
-API.config = function(name, value) {
-    return name ?
-        value === undefined ?
-            API.get(this.cfg, name) :
-            API.set(this.cfg, name, value) :
-        API.getAll(this.cfg);
-};
-
-API.process = function(cfg) {
-    if (cfg.configure) {
-        cfg.configure(cfg);
-    }
-    for (var name in cfg) {
-        var value = cfg[name];
-        if (typeof value === 'string') {
-            value = cfg[name] = API.resolve(value, cfg.data, cfg, cfg.consumeData);
-        }
-    }
-};
-
 API.resolve = function(string, data, cfg, consume) {
     var key,
         str = string,
@@ -201,140 +346,6 @@ API.resolve = function(string, data, cfg, consume) {
         }
     }
     return str;
-};
-
-API.getAll = function(cfg, inheriting) {
-    var flat = cfg._parent ? API.getAll(cfg._parent, true) : {};
-    for (var prop in cfg) {
-        // don't copy _fn, or _parent
-        if (prop.charAt(0) !== '_') {
-            var meta = cfg[prop];
-            if (meta.root || prop === 'name') {// name's are pre-combined
-                flat[prop] = meta.value;
-            } else if (!inheriting || !meta.private) {
-                flat[prop] = API.combine(flat[prop], meta.value, flat);
-            }
-        }
-    }
-    return flat;
-};
-
-API.get = function(cfg, name, inheriting) {
-    var meta = cfg[name];
-    // if no non-private prop
-    if (!meta || (inheriting && meta.private)) {
-        // oh, and if there's a parent too
-        return cfg._parent && API.get(cfg._parent, name, true);
-    }
-    if (meta) {
-        if (meta.root || !cfg._parent) {
-            return meta.value;
-        }
-        return API.combine(API.get(cfg._parent, name, true), meta.value, cfg);
-    }
-};
-
-API.getter = function(fn, name) {
-    try {
-        Object.defineProperty(fn, name, {
-            get: function() {
-                return API.get(fn.cfg, name);
-            },
-            configurable: true
-        });
-    } catch (e) {}// ignore failures
-};
-
-API.setAll = function(cfg, config) {
-    API.elevate('Children', config);
-    API.elevate('Properties', config);
-    for (var prop in config) {
-        API.set(cfg, prop, config[prop]);
-    }
-};
-API.elevate = function(key, config) {
-    if (key in config) {
-        var structured = config[key];
-        for (var prop in structured) {
-            config[prop] = structured[prop];
-        }
-    }
-};
-API.set = function(cfg, prop, value) {
-    var api = cfg._fn,
-        meta = (typeof value === "object" && 'value' in value) ?
-            value :
-            { value: value };
-    meta.name = prop;
-    meta.fullname = cfg._parent ?
-        cfg._parent.name + '.' + prop :
-        prop;
-    // don't require @ for extensions
-    if (typeof meta.value === "object" && isCaps(prop)) {
-        prop = '@' + prop;
-    }
-    // identify private, root, and extension config
-    while (API.meta.chars.indexOf(prop.charAt(0)) >= 0) {
-        API.meta[prop.charAt(0)](meta, cfg);
-        prop = prop.substring(1);
-    }
-    if (typeof meta.value === "function") {
-        if (!meta.value.cfg) {// if not an extension/sub, bind to cfg
-            meta.value = meta.value.bind(cfg);
-        }
-        if (API.get(cfg, 'debug')) {// add logging
-            meta.value = API.debug(meta.name, meta.value);
-        }
-    }
-    // let config props be accessed from the api function
-    if (!(prop in api)) {
-        API.getter(api, prop);
-    }
-    cfg[prop] = meta;
-};
-function isCaps(s) {
-    return s.charAt(0) !== s.charAt(0).toLowerCase();
-}
-API.meta = {
-    chars: '!@_'.split(''),
-    _: function(meta) {
-        meta.private = true;
-    },
-    '!': function(meta) {
-        meta.root = true;
-    },
-    '@': function(meta, cfg) {
-        meta.root = true;// extensions are self-combining, so act as roots
-        cfg._fn[meta.name] = meta.value =
-            API.build(meta.value, cfg, meta.name);
-    }
-};
-
-API.log = function(args, level) {
-    var console = W.console,
-        log = console && console[level || 'log'];
-    if (log) {
-        log.apply(console, args);
-    }
-};
-API.debug = function(name, fn) {
-    return function debug(arg) {
-        var args;
-        try {
-            var ret = fn.apply(this, arguments);
-            if (ret !== undefined && ret !== arg) {
-                args = [name+'('];
-                args.push.apply(args, arguments);
-                args.push(') resolved to ', ret);
-                API.log(args, 'debug');
-            }
-            return ret;
-        } catch (e) {
-            args = Array.prototype.concat.apply([name, e], arguments);
-            API.log(args, 'error');
-            throw e;
-        }
-    };
 };
 
 API.combine = function(pval, val, cfg) {
