@@ -28,13 +28,13 @@ Test assertions:
 
     test('API.build', function() {
         ok(API.build);
-        var config = {},
-            fn = API.build(config);
+        var inCfg = {},
+            fn = API.build(inCfg);
         equal(typeof fn, 'function', 'should return a function');
-        ok(fn.cfg, 'should have .cfg');
-        equal(typeof fn.cfg.name, "string", '.cfg should have a name');
-        ok('_parent' in fn.cfg, '.cfg should have _parent defined');
-        equal(fn.cfg._fn, fn, '.cfg should have ._fn');
+        ok(fn.metaCfg, 'should have .metaCfg');
+        equal(typeof fn.metaCfg.name, "string", '.metaCfg should have a name');
+        ok('_parent' in fn.metaCfg, '.metaCfg should have _parent defined');
+        equal(fn.metaCfg._fn, fn, '.metaCfg should have ._fn');
     });
 
     test('API.type', function() {
@@ -113,13 +113,13 @@ Test assertions:
         expect(9);
         var fn = function(){},
             cfg = {_fn: fn};
-        fn.cfg = cfg;
+        fn.metaCfg = cfg;
 
         API.set(cfg, 'foo', true);
         strictEqual(cfg.foo.value, true);
 
         API.set(cfg, 'foo', function() {
-            strictEqual(this, cfg, 'value fn context should be cfg');
+            notEqual(this, cfg, 'value fn context should no longer be bound to cfg');
         });
         cfg.foo.value();
 
@@ -329,15 +329,15 @@ Test assertions:
     test('\'parent\' property', function() {
         var base = API({ url: '/base' }, 'base'),
             sub = API({ url: '/sub', parent: base }, 'sub');
-        equal('/base/sub', API.get(sub.cfg, 'url'));
+        equal('/base/sub', API.get(sub.metaCfg, 'url'));
     });
 
     test('extend() function', function() {
         var base = API({ url: '/base' });
         equal(typeof base.extend, "function");
         var sub = base.extend({ url: '/sub' });
-        equal('/base/sub', API.get(sub.cfg, 'url'));
-        strictEqual(base.cfg, sub.cfg._parent);
+        equal('/base/sub', API.get(sub.metaCfg, 'url'));
+        strictEqual(base.metaCfg, sub.metaCfg._parent);
     });
 
     test('getters for properties', function() {
@@ -357,7 +357,7 @@ Test assertions:
 
     test('make name accessible on cfg', function() {
         var api = API({ foo: true }, 'HasFoo');
-        equal('HasFoo', api.cfg.name);
+        equal('HasFoo', api.metaCfg.name);
     });
 
     test('API.main', function() {
@@ -420,7 +420,7 @@ Test assertions:
 
         // test non-heirarchical source
         API.follow({
-            cfg: {name:'test'},
+            metaCfg: {name:'test'},
             follows: {
                 source: service,
                 path: '_links.type.href'
@@ -429,15 +429,15 @@ Test assertions:
 
         // test heirarchical source
         API.follow({
-            cfg: {name:'test'},
+            metaCfg: {name:'test'},
             follows: '_links.type.href'
         }, {
-            cfg:{ _parent:{ _fn: service }}
+            metaCfg:{ _parent:{ _fn: service }}
         });
 
         // test direct URL result
         API.follow({
-            cfg: {name:'test'},
+            metaCfg: {name:'test'},
             follows: {
                 source: function() {
                     return new FakeResolvedPromise("/related/type");

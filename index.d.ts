@@ -4,7 +4,7 @@ declare namespace Posterior {
     type U = any;
 
     export interface XHR extends XMLHttpRequest {
-        readonly cfg: RequesterConfig;
+        readonly cfg: MetaConfig;
         readonly responseObject: {};
         readonly responseHeaders: {
             [header: string]: string;
@@ -42,9 +42,9 @@ declare namespace Posterior {
         consumeData?: boolean | Meta<boolean>;
 
         // handlers
-        configure?: ((this: ActiveConfig, cfg: ActiveConfig) => void) | Function | Meta<Function>;
-        then?: ((this: ActiveConfig, then: (value: T) => U) => Promise<U>) | Function | Meta<Function>;
-        catch?: ((handler: (this: ActiveConfig, error: any, xhr?: XHR) => void | U | Promise<U>) => Promise<U>) | Function | Meta<Function>;
+        configure?: ((this: MetaConfig, cfg: RunConfig) => void) | Function | Meta<Function>;
+        then?: ((this: MetaConfig, then: (value: T) => U) => Promise<U>) | Function | Meta<Function>;
+        catch?: ((handler: (this: MetaConfig, error: any, xhr?: XHR) => void | U | Promise<U>) => Promise<U>) | Function | Meta<Function>;
 
         // XHR specific configuration
         async?: boolean | Meta<boolean>;
@@ -55,7 +55,7 @@ declare namespace Posterior {
         requestedWith?: string | Meta<string>;
 
         // request handlers
-        requestData?: (this: ActiveConfig, data: any) => undefined | any;
+        requestData?: (this: RunConfig, data: any) => undefined | any;
         onreadystatechange?: XHREventHandler | Meta<XHREventHandler>;
         error?: XHREventHandler | Meta<XHREventHandler>;
         //timeout?: XHREventHandler | Meta<XHREventHandler>;
@@ -64,8 +64,8 @@ declare namespace Posterior {
         load?: XHREventHandler | Meta<XHREventHandler>;
 
         // response handlers and status code mapping
-        responseData?: ((this: ActiveConfig, data: any, xhr: XHR) => T | undefined) | Meta<Function>;
-        failure?: ((this: ActiveConfig, status: number, xhr: XHR) => any) | Meta<Function>;
+        responseData?: ((this: RunConfig, data: any, xhr: XHR) => T | undefined) | Meta<Function>;
+        failure?: ((this: RunConfig, status: number, xhr: XHR) => any) | Meta<Function>;
     }
     interface StatusCodeMapping {
         // status code mapping and mapping handlers
@@ -101,27 +101,27 @@ declare namespace Posterior {
     }
 
     // one per Requester (structured)
-    interface RequesterConfigBase {
+    interface MetaConfigBase {
         name: string;
 
         // internals
         _fn: Requester;
-        _parent: RequesterConfig | null;
+        _parent: MetaConfig | null;
     }
     //TODO: find way to declare only Meta<T> versions from InputConfig
-    export type RequesterConfig = RequesterConfigBase & InputConfig;
+    export type MetaConfig = MetaConfigBase & InputConfig;
 
     // one per call (flattened, filled, and called)
-    interface ActiveConfigBase {
+    interface RunConfigBase {
         _args: [any];
         data: [any] | {};
         _singletonResult?: T;
     }
-    export type ActiveConfig = ActiveConfigBase & RequesterConfig;
+    export type RunConfig = RunConfigBase & MetaConfig;
 
     const version: string;
 
-    function xhr(cfg: ActiveConfig): XHRPromise;
+    function xhr(cfg: RunConfig): XHRPromise;
     namespace xhr {
         // utilities
         function isData(data: any): boolean;
@@ -137,35 +137,35 @@ declare namespace Posterior {
         let ctor: XHR;
         let active: number;
         function notify(isActive: boolean): void;
-        function method(cfg: ActiveConfig): string;
-        function url(cfg: ActiveConfig): string;
-        function key(cfg: ActiveConfig): string;
+        function method(cfg: RunConfig): string;
+        function url(cfg: RunConfig): string;
+        function key(cfg: RunConfig): string;
         function cache(xhr: XHR): XHR;
-        function remember(stage: string, xhr: XHR, cfg: ActiveConfig, data: any): void;
+        function remember(stage: string, xhr: XHR, cfg: RunConfig, data: any): void;
 
         // override at your own risk
-        function promise(xhr: XHR, cfg: ActiveConfig): Promise<T>;
-        function main(cfg: ActiveConfig): XHRPromise;
-        function config(xhr: XHR, cfg: ActiveConfig): void;
-        function retry(cfg: ActiveConfig, retry: boolean | {}, events: {}, fail: (e: Event) => void): void;
-        function throttle(xhr: XHR, cfg: ActiveConfig, events: {}, fail: (e: Event) => void): void;
+        function promise(xhr: XHR, cfg: RunConfig): Promise<T>;
+        function main(cfg: RunConfig): XHRPromise;
+        function config(xhr: XHR, cfg: RunConfig): void;
+        function retry(cfg: RunConfig, retry: boolean | {}, events: {}, fail: (e: Event) => void): void;
+        function throttle(xhr: XHR, cfg: RunConfig, events: {}, fail: (e: Event) => void): void;
         const throttles: {
             [key: string]: {
                 queue: number;
                 lastRun: number;
             }
         };
-        function run(xhr: XHR, cfg: ActiveConfig, events: {}, fail: (e: Event) => void): void;
-        function load(cfg: ActiveConfig, resolve: (value: T) => void, reject: (error: any) => void): () => void;
+        function run(xhr: XHR, cfg: RunConfig, events: {}, fail: (e: Event) => void): void;
+        function load(cfg: RunConfig, resolve: (value: T) => void, reject: (error: any) => void): () => void;
         function forceJSONResponse(xhr: XHR): void;
-        function data(cfg: ActiveConfig): any;
+        function data(cfg: RunConfig): any;
         function start(): void;
         function end(): void;
     }
 
     export type Promiser = (...input: any[]) => Promise<T>;
     interface RequesterBase extends InputConfigBase {
-        cfg: RequesterConfig;
+        cfg: MetaConfig;
         config(name: string, value?: any): any;
         extend(config: InputConfig, name?: string): Requester & {
             [Sub: string]: Requester
@@ -178,10 +178,10 @@ declare namespace Posterior {
     function api(config: InputConfig, name?: string): Requester;
     namespace api {
         // building
-        function build(config: InputConfig, parent: RequesterConfig, name: string): Requester;
+        function build(config: InputConfig, parent: MetaConfig, name: string): Requester;
         function debug(name: string, fn: Requester): Requester;
-        function setAll(cfg: InputConfig, config: RequesterConfig): void;
-        function set(cfg: RequesterConfig, prop: string, value: any, parentName: string): void;
+        function setAll(cfg: InputConfig, config: MetaConfig): void;
+        function set(cfg: MetaConfig, prop: string, value: any, parentName: string): void;
         function getter(fn: Requester, name: string): void;
         const meta: {
             chars: [string];
@@ -191,7 +191,7 @@ declare namespace Posterior {
         };
 
         // utility
-        function get(cfg: RequesterConfig, name: string, inheriting?: boolean): any;
+        function get(cfg: MetaConfig, name: string, inheriting?: boolean): any;
 
         // user-facing (on all Requesters)
         function config(name: string, value: any): any;
@@ -201,17 +201,17 @@ declare namespace Posterior {
 
         // requesting
         function main(fn: Requester, args: [any]): XHRPromise | Promise<T>;
-        function getAll(cfg: RequesterConfig, inheriting?: boolean): ActiveConfig;
-        function process(cfg: ActiveConfig): void;
-        function promise(cfg: ActiveConfig, fn: Requester): XHRPromise | Promise<T>;
+        function getAll(cfg: MetaConfig, inheriting?: boolean): RunConfig;
+        function process(cfg: RunConfig): void;
+        function promise(cfg: RunConfig, fn: Requester): XHRPromise | Promise<T>;
         function require(req: Requirement): Promise<T>;
-        function follow(cfg: ActiveConfig, fn: Requester): XHRPromise | Promise<T>;
+        function follow(cfg: RunConfig, fn: Requester): XHRPromise | Promise<T>;
 
         // resolving/combining config values
-        function resolve(string: string, data: [any] | {}, cfg: ActiveConfig, consume: boolean | undefined): string;
-        function copy(to: ActiveConfig, from: RequesterConfig): void;
+        function resolve(string: string, data: [any] | {}, cfg: RunConfig, consume: boolean | undefined): string;
+        function copy(to: RunConfig, from: MetaConfig): void;
         function log(args: [any], level: string): void;
-        function combine(pval: any, val: any, cfg: ActiveConfig): any;
+        function combine(pval: any, val: any, cfg: RunConfig): any;
         function combineFn(pfn: Function, fn: Function): Function;
         function combineObject(pobj: {}, obj: {}): {};
         function type(val: any): string;
