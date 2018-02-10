@@ -165,7 +165,7 @@ declare namespace Posterior {
 
     export type Promiser = (...input: any[]) => Promise<T>;
     interface RequesterBase extends InputConfigBase {
-        cfg: MetaConfig;
+        metaCfg: MetaConfig;
         config(name: string, value?: any): any;
         extend(config: InputConfig, name?: string): Requester & {
             [Sub: string]: Requester
