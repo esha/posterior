@@ -1,4 +1,4 @@
-/*! posterior - v0.22.1 - 2018-02-09
+/*! posterior - v0.22.2 - 2018-02-09
 * http://esha.github.io/posterior/
 * Copyright (c) 2018 ESHA Research; Licensed  */
 
@@ -401,48 +401,179 @@ string/int concat means usual
 boolean concat means &&
 
 */
-var API = Posterior.api = function(config, name) {
-    var parent = config.parent || null;
-    if (parent && parent.cfg) {
-        parent = parent.cfg;
+var API = Posterior.api = function(inCfg, name) {
+    var parent = inCfg.parent || null;
+    if (parent && parent.metaCfg) {
+        parent = parent.metaCfg;
     }
-    return API.build(config, parent, name);
+    return API.build(inCfg, parent, name);
 };
 
-API.build = function(config, parent, name) {
+// start exposed functions
+
+API.extend = function(inCfg, name) {
+  return (this[name || "ext"] = API.build(inCfg, this.metaCfg, name || "ext"));
+};
+
+API.config = function(name, value) {
+  return name ?
+    value === undefined ?
+        API.get(this.metaCfg, name) :
+        API.set(this.metaCfg, name, value) :
+    API.getAll(this.metaCfg);
+};
+
+API.get = function(metaCfg, name, inheriting) {
+  var meta = metaCfg[name];
+  // if no non-private prop
+  if (!meta || (inheriting && meta.private)) {
+    // oh, and if there's a parent too
+    return metaCfg._parent && API.get(metaCfg._parent, name, true);
+  }
+  if (meta) {
+    if (meta.root || !metaCfg._parent) {
+      return meta.value;
+    }
+    return API.combine(API.get(metaCfg._parent, name, true), meta.value, metaCfg);
+  }
+};
+
+// end exposed functions
+// start build-time functions
+
+API.build = function(inCfg, parent, name) {
     var fn = function() {
         return API.main(fn, arguments);
     },
-    cfg = {
+    metaCfg = {
         _fn: fn,
         _parent: parent,
         name: name || 'Posterior'
     };
 
-    if (config.debug || API.get(cfg, 'debug')) {
-        fn = cfg._fn = API.debug(cfg.name, fn);
+    if (inCfg.debug || API.get(metaCfg, 'debug')) {
+        fn = metaCfg._fn = API.debug(metaCfg.name, fn);
     }
-    API.setAll(cfg, config);
+    API.setAll(metaCfg, inCfg);
 
-    fn.cfg = cfg;
+    fn.metaCfg = metaCfg;
     fn.config = API.config;
     fn.extend = API.extend;
-    if (API.get(cfg, 'auto')) {
+    if (API.get(metaCfg, 'auto')) {
         setTimeout(fn, 0);
     }
     return fn;
 };
 
-API.extend = function(config, name) {
-    return this[name||'ext'] = API.build(config, this.cfg, name||'ext');
+API.setAll = function(metaCfg, inCfg) {
+  API.elevate("Children", inCfg);
+  API.elevate("Properties", inCfg);
+  for (var prop in inCfg) {
+    API.set(metaCfg, prop, inCfg[prop]);
+  }
 };
 
+API.elevate = function(key, inCfg) {
+  if (key in inCfg) {
+    var structured = inCfg[key];
+    for (var prop in structured) {
+      inCfg[prop] = structured[prop];
+    }
+  }
+};
+
+API.set = function(metaCfg, prop, value) {
+  var api = metaCfg._fn,
+    meta = typeof value === "object" && "value" in value ?
+        value :
+        { value: value };
+  meta.name = prop;
+  meta.fullname = metaCfg._parent ? metaCfg._parent.name + "." + prop : prop;
+  // don't require @ for extensions
+  if (typeof meta.value === "object" && isCaps(prop)) {
+    prop = "@" + prop;
+  }
+  // identify private, root, and extension config
+  while (API.meta.chars.indexOf(prop.charAt(0)) >= 0) {
+    API.meta[prop.charAt(0)](meta, metaCfg);
+    prop = prop.substring(1);
+  }
+  if (typeof meta.value === "function" && API.get(metaCfg, "debug")) {
+    // add logging
+    meta.value = API.debug(meta.name, meta.value);
+  }
+  // let config props be accessed from the api function
+  if (!(prop in api)) {
+    API.getter(api, prop);
+  }
+  metaCfg[prop] = meta;
+};
+function isCaps(s) {
+  return s.charAt(0) !== s.charAt(0).toLowerCase();
+}
+
+API.meta = {
+  chars: "!@_".split(""),
+  _: function(meta) {
+    meta.private = true;
+  },
+  "!": function(meta) {
+    meta.root = true;
+  },
+  "@": function(meta, metaCfg) {
+    meta.root = true; // extensions are self-combining, so act as roots
+    metaCfg._fn[meta.name] = meta.value = API.build(meta.value, metaCfg, meta.name);
+  }
+};
+
+API.getter = function(fn, name) {
+  try {
+    Object.defineProperty(fn, name, {
+      get: function() {
+        return API.get(fn.metaCfg, name);
+      },
+      configurable: true
+    });
+  } catch (e) {} // ignore failures
+};
+
+API.log = function(args, level) {
+  var console = W.console, log = console && console[level || "log"];
+  if (log) {
+    log.apply(console, args);
+  }
+};
+
+API.debug = function(name, fn) {
+  return function debug(arg) {
+    var args;
+    try {
+      var ret = fn.apply(this, arguments);
+      if (ret !== undefined && ret !== arg) {
+        args = [name + "("];
+        args.push.apply(args, arguments);
+        args.push(") resolved to ", ret);
+        API.log(args, "debug");
+      }
+      return ret;
+    } catch (e) {
+      args = Array.prototype.concat.apply([name, e], arguments);
+      API.log(args, "error");
+      throw e;
+    }
+  };
+};
+
+// end build-time functions
+// start call-time functions
+
 API.main = function(fn, args) {
-    if (fn.cfg._singletonResult) {
-        return Promise.resolve(fn.cfg._singletonResult);
+    if (fn.metaCfg._singletonResult) {
+        return Promise.resolve(fn.metaCfg._singletonResult);
     }
 
-    var cfg = API.getAll(fn.cfg);
+    var cfg = API.getAll(fn.metaCfg);
+    cfg._fn = fn;
     // data must be an object or array
     cfg._args = args;
     cfg.data = (args.length > 1 || typeof args[0] !== "object") ?
@@ -453,10 +584,40 @@ API.main = function(fn, args) {
 
     if (cfg.singleton) {
         promise.then(function(result) {
-            fn.cfg._singletonResult = result;
+            fn.metaCfg._singletonResult = result;
         });
     }
     return promise;
+};
+
+API.getAll = function(metaCfg, inheriting) {
+  var cfg = metaCfg._parent ? API.getAll(metaCfg._parent, true) : {};
+  for (var prop in metaCfg) {
+    // don't copy _fn, or _parent
+    if (prop.charAt(0) !== "_") {
+      var meta = metaCfg[prop];
+      if (meta.root || prop === "name") {
+        // name's are pre-combined
+        cfg[prop] = meta.value;
+      } else if (!inheriting || !meta.private) {
+        cfg[prop] = API.combine(cfg[prop], meta.value, cfg);
+      }
+    }
+  }
+  return cfg;
+};
+
+API.process = function(cfg) {
+  if (cfg.configure) {
+    // use meta config as context, pass in run cfg
+    cfg.configure.call(cfg._fn.metaCfg, cfg);
+  }
+  for (var name in cfg) {
+    var value = cfg[name];
+    if (typeof value === "string") {
+      value = cfg[name] = API.resolve(value, cfg.data, cfg, cfg.consumeData);
+    }
+  }
 };
 
 API.promise = function(cfg, fn) {
@@ -477,7 +638,7 @@ API.follow = function(cfg, fn) {
             follows = follows.path;
         }
         if (!leader) {
-            leader = fn.cfg._parent._fn;
+            leader = fn.metaCfg._parent._fn;
         }
         if (leader) {
             var lead = leader.apply(null, cfg._args || []);
@@ -504,26 +665,6 @@ API.require = function(req) {
         return req ? Promise.resolve(req) : Promise.reject(req);
     } catch (e) {
         return Promise.reject(e);
-    }
-};
-
-API.config = function(name, value) {
-    return name ?
-        value === undefined ?
-            API.get(this.cfg, name) :
-            API.set(this.cfg, name, value) :
-        API.getAll(this.cfg);
-};
-
-API.process = function(cfg) {
-    if (cfg.configure) {
-        cfg.configure(cfg);
-    }
-    for (var name in cfg) {
-        var value = cfg[name];
-        if (typeof value === 'string') {
-            value = cfg[name] = API.resolve(value, cfg.data, cfg, cfg.consumeData);
-        }
     }
 };
 
@@ -568,140 +709,6 @@ API.resolve = function(string, data, cfg, consume) {
         }
     }
     return str;
-};
-
-API.getAll = function(cfg, inheriting) {
-    var flat = cfg._parent ? API.getAll(cfg._parent, true) : {};
-    for (var prop in cfg) {
-        // don't copy _fn, or _parent
-        if (prop.charAt(0) !== '_') {
-            var meta = cfg[prop];
-            if (meta.root || prop === 'name') {// name's are pre-combined
-                flat[prop] = meta.value;
-            } else if (!inheriting || !meta.private) {
-                flat[prop] = API.combine(flat[prop], meta.value, flat);
-            }
-        }
-    }
-    return flat;
-};
-
-API.get = function(cfg, name, inheriting) {
-    var meta = cfg[name];
-    // if no non-private prop
-    if (!meta || (inheriting && meta.private)) {
-        // oh, and if there's a parent too
-        return cfg._parent && API.get(cfg._parent, name, true);
-    }
-    if (meta) {
-        if (meta.root || !cfg._parent) {
-            return meta.value;
-        }
-        return API.combine(API.get(cfg._parent, name, true), meta.value, cfg);
-    }
-};
-
-API.getter = function(fn, name) {
-    try {
-        Object.defineProperty(fn, name, {
-            get: function() {
-                return API.get(fn.cfg, name);
-            },
-            configurable: true
-        });
-    } catch (e) {}// ignore failures
-};
-
-API.setAll = function(cfg, config) {
-    API.elevate('Children', config);
-    API.elevate('Properties', config);
-    for (var prop in config) {
-        API.set(cfg, prop, config[prop]);
-    }
-};
-API.elevate = function(key, config) {
-    if (key in config) {
-        var structured = config[key];
-        for (var prop in structured) {
-            config[prop] = structured[prop];
-        }
-    }
-};
-API.set = function(cfg, prop, value) {
-    var api = cfg._fn,
-        meta = (typeof value === "object" && 'value' in value) ?
-            value :
-            { value: value };
-    meta.name = prop;
-    meta.fullname = cfg._parent ?
-        cfg._parent.name + '.' + prop :
-        prop;
-    // don't require @ for extensions
-    if (typeof meta.value === "object" && isCaps(prop)) {
-        prop = '@' + prop;
-    }
-    // identify private, root, and extension config
-    while (API.meta.chars.indexOf(prop.charAt(0)) >= 0) {
-        API.meta[prop.charAt(0)](meta, cfg);
-        prop = prop.substring(1);
-    }
-    if (typeof meta.value === "function") {
-        if (!meta.value.cfg) {// if not an extension/sub, bind to cfg
-            meta.value = meta.value.bind(cfg);
-        }
-        if (API.get(cfg, 'debug')) {// add logging
-            meta.value = API.debug(meta.name, meta.value);
-        }
-    }
-    // let config props be accessed from the api function
-    if (!(prop in api)) {
-        API.getter(api, prop);
-    }
-    cfg[prop] = meta;
-};
-function isCaps(s) {
-    return s.charAt(0) !== s.charAt(0).toLowerCase();
-}
-API.meta = {
-    chars: '!@_'.split(''),
-    _: function(meta) {
-        meta.private = true;
-    },
-    '!': function(meta) {
-        meta.root = true;
-    },
-    '@': function(meta, cfg) {
-        meta.root = true;// extensions are self-combining, so act as roots
-        cfg._fn[meta.name] = meta.value =
-            API.build(meta.value, cfg, meta.name);
-    }
-};
-
-API.log = function(args, level) {
-    var console = W.console,
-        log = console && console[level || 'log'];
-    if (log) {
-        log.apply(console, args);
-    }
-};
-API.debug = function(name, fn) {
-    return function debug(arg) {
-        var args;
-        try {
-            var ret = fn.apply(this, arguments);
-            if (ret !== undefined && ret !== arg) {
-                args = [name+'('];
-                args.push.apply(args, arguments);
-                args.push(') resolved to ', ret);
-                API.log(args, 'debug');
-            }
-            return ret;
-        } catch (e) {
-            args = Array.prototype.concat.apply([name, e], arguments);
-            API.log(args, 'error');
-            throw e;
-        }
-    };
 };
 
 API.combine = function(pval, val, cfg) {
@@ -754,7 +761,7 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "0.22.1";
+Posterior.version = "0.22.2";
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Posterior;
