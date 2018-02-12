@@ -1,4 +1,4 @@
-/*! posterior - v0.22.4 - 2018-02-12
+/*! posterior - v0.22.5 - 2018-02-12
 * http://esha.github.io/posterior/
 * Copyright (c) 2018 ESHA Research; Licensed  */
 
@@ -120,16 +120,16 @@ XHR.promise = function(xhr, cfg) {
         var fail = function(e) {
             if (cfg.retry) {
                 XHR.retry(cfg, cfg.retry, events, fail);
-            } else if (cfg.debug === 'xhr') {
-                XHR.remember('response', xhr, cfg, e);
+            } else if (cfg.debug === 'capture') {
+                XHR.capture('error', xhr, cfg, e);
                 reject(e);
             } else {
                 reject(xhr.error = e);
             }
         },
-        succeed = cfg.debug === 'xhr' ?
+        succeed = cfg.debug === 'capture' ?
             function(result) {
-                XHR.remember('response', xhr, cfg, result);
+                XHR.capture('success', xhr, cfg, result);
                 resolve(result);
             } :
             resolve,
@@ -330,10 +330,10 @@ XHR.cache = function(xhr) {
     store(XHR.key(cfg), XHR.safeCopy(xhr), cfg.cache);
     return xhr;
 };
-XHR.remember = function(stage, xhr, cfg, data) {
+XHR.capture = function(state, xhr, cfg, data) {
     var fn = cfg._fn;
-    fn.debug = {
-        stage: stage,
+    fn.capture = {
+        state: state,
         method: cfg.method || 'GET',
         status: xhr.status,
         url: API.resolve(cfg.url, cfg.data, null, false),
@@ -764,7 +764,7 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "0.22.4";
+Posterior.version = "0.22.5";
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Posterior;
