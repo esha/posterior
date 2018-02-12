@@ -198,7 +198,7 @@ XHR.load = function(cfg, resolve, reject) {
                     reject('Presumed syntax error in JSON response, suppressed by your browser.');
                 } else {
                     if (cfg.responseData && XHR.isData(data)) {
-                        var ret = cfg.responseData(data, xhr);
+                        var ret = xhr.responseData = cfg.responseData(data, xhr);
                         data = ret === undefined ? data : ret;
                     }
                     resolve(XHR.isData(data) ? data : xhr);
@@ -239,7 +239,7 @@ XHR.data = function(cfg) {
     } else if (data !== undefined && typeof data !== 'string') {
         data = JSON.stringify(data);
     }
-    return data || '';
+    return cfg.requestBody = data || '';
 };
 
 XHR.properties = {
@@ -320,7 +320,9 @@ XHR.remember = function(stage, xhr, cfg, data) {
         url: API.resolve(cfg.url, cfg.data, null, false),
         requestHeaders: cfg.headers,
         requestData: cfg.data,
+        requestBody: cfg.requestBody,
         responseHeaders: xhr.responseHeaders,
+        responseBody: xhr.responseBody,
         responseData: data
     };
     store(cfg.name+'.debug', fn.debug);
