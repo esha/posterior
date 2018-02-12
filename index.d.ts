@@ -164,6 +164,7 @@ declare namespace Posterior {
     }
 
     export interface Capture {
+        state: string,
         method: string,
         url: string,
         requestHeaders: {
