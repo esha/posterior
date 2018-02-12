@@ -322,7 +322,7 @@ XHR.capture = function(state, xhr, cfg, data) {
         requestData: cfg.data,
         requestBody: cfg.requestBody,
         responseHeaders: xhr.responseHeaders,
-        responseBody: xhr.responseBody,
+        responseBody: xhr.response,
         responseData: data
     };
 };
