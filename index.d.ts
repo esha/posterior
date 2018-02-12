@@ -164,21 +164,21 @@ declare namespace Posterior {
     }
 
     export interface Capture {
-        state: string,
-        method: string,
-        url: string,
+        state: string;
+        method: string;
+        url: string;
         requestHeaders: {
             [header: string]: string;
-        },
-        requestData: any,
-        requestBody: string,
-        status: number,
+        };
+        requestData: any;
+        requestBody: string;
+        status: number;
         responseHeaders: {
             [header: string]: string;
-        },
-        responseData: any,
-        responseBody: string
-    };
+        };
+        responseData: any;
+        responseBody: string;
+    }
 
     export type Promiser = (...input: any[]) => Promise<T>;
     interface RequesterBase extends InputConfigBase {
