@@ -230,11 +230,13 @@ XHR.isData = function(data) {
 };
 XHR.data = function(cfg) {
     var data = cfg.data;
-    if (cfg.requestData && XHR.isData(data)) {
+    if (cfg.requestData) {
         var ret = cfg.requestData(data);
         data = ret === undefined ? data : ret;// return new object or keep old
     }
-    if (data !== undefined && typeof data !== "string") {
+    if (data instanceof Object && data.hasOwnProperty('toString')) {
+        data = data.toString();
+    } else if (data !== undefined && typeof data !== 'string') {
         data = JSON.stringify(data);
     }
     return data || '';
