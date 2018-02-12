@@ -101,16 +101,16 @@ XHR.promise = function(xhr, cfg) {
         var fail = function(e) {
             if (cfg.retry) {
                 XHR.retry(cfg, cfg.retry, events, fail);
-            } else if (cfg.debug === 'xhr') {
-                XHR.remember('response', xhr, cfg, e);
+            } else if (cfg.debug === 'capture') {
+                XHR.capture(capture, cfg, e);
                 reject(e);
             } else {
                 reject(xhr.error = e);
             }
         },
-        succeed = cfg.debug === 'xhr' ?
+        succeed = cfg.debug === 'capture' ?
             function(result) {
-                XHR.remember('response', xhr, cfg, result);
+                XHR.capture(xhr, cfg, result);
                 resolve(result);
             } :
             resolve,
@@ -311,10 +311,9 @@ XHR.cache = function(xhr) {
     store(XHR.key(cfg), XHR.safeCopy(xhr), cfg.cache);
     return xhr;
 };
-XHR.remember = function(stage, xhr, cfg, data) {
+XHR.capture = function(xhr, cfg, data) {
     var fn = cfg._fn;
-    fn.debug = {
-        stage: stage,
+    fn.capture = {
         method: cfg.method || 'GET',
         status: xhr.status,
         url: API.resolve(cfg.url, cfg.data, null, false),
