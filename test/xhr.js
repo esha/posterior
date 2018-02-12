@@ -512,7 +512,7 @@ Test assertions:
             }
             equal(capture.responseData, 'value', 'responseData should be value');
         };
-        testDebug(cfg._fn.capture);
+        testCapture(cfg._fn.capture);
 
         // clean up
         store.remove(cfg.name+'.debug');
