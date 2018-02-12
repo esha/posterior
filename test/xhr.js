@@ -514,8 +514,6 @@ Test assertions:
             equal(debug.responseData, 'value', 'responseData should be value');
         };
         testDebug(cfg._fn.debug);
-        ok(store.has(cfg.name + ".debug"), "debug should be stored");
-        testDebug(store.get(cfg.name+".debug"), false);
 
         // clean up
         store.remove(cfg.name+'.debug');

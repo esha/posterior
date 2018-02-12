@@ -325,7 +325,6 @@ XHR.remember = function(stage, xhr, cfg, data) {
         responseBody: xhr.responseBody,
         responseData: data
     };
-    store(cfg.name+'.debug', fn.debug);
 };
 XHR.safeCopy = function(object, copied) {
     var copy = {};
