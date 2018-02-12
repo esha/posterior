@@ -497,10 +497,12 @@ Test assertions:
         var cfg = {
             name: 'Test',
             url: '/test',
+            requestBody: 'notempty',
             _fn: function Test(){},
         };
-        XHR.capture('response', new FakeXHR(), cfg, 'value');
+        XHR.capture('success', new FakeXHR(), cfg, 'value');
         var testCapture = function(capture, checkDefined) {
+            equal(capture.state, 'success', 'state should be as passed to XHR.capture');
             ok(capture instanceof Object, 'should have capture object');
             equal(typeof capture.method, "string", "capture.method should be string");
             equal(typeof capture.url, "string", "capture.url should be string");
@@ -509,7 +511,9 @@ Test assertions:
                 ok('requestHeaders' in capture, 'requestHeaders should be defined');
                 ok('requestData' in capture, 'requestData should be defined');
                 ok('responseHeaders' in capture, 'responseHeaders should be defined');
+                ok("responseBody" in capture, "responseBody should be defined");
             }
+            equal(capture.requestBody, 'notempty', "requestBody should be 'notempty'");
             equal(capture.responseData, 'value', 'responseData should be value');
         };
         testCapture(cfg._fn.capture);
