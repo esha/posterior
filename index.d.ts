@@ -163,9 +163,27 @@ declare namespace Posterior {
         function end(): void;
     }
 
+    export interface Debug {
+        stage: string,
+        method: string,
+        url: string,
+        requestHeaders: {
+            [header: string]: string;
+        },
+        requestData: any,
+        requestBody: string,
+        status: number,
+        responseHeaders: {
+            [header: string]: string;
+        },
+        responseData: any,
+        responseBody: string
+    };
+
     export type Promiser = (...input: any[]) => Promise<T>;
     interface RequesterBase extends InputConfigBase {
         metaCfg: MetaConfig;
+        debug?: Debug;
         config(name: string, value?: any): any;
         extend(config: InputConfig, name?: string): Requester & {
             [Sub: string]: Requester
