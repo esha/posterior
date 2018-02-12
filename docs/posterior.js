@@ -1,4 +1,4 @@
-/*! posterior - v0.22.3 - 2018-02-09
+/*! posterior - v0.22.4 - 2018-02-12
 * http://esha.github.io/posterior/
 * Copyright (c) 2018 ESHA Research; Licensed  */
 
@@ -217,7 +217,7 @@ XHR.load = function(cfg, resolve, reject) {
                     reject('Presumed syntax error in JSON response, suppressed by your browser.');
                 } else {
                     if (cfg.responseData && XHR.isData(data)) {
-                        var ret = cfg.responseData(data, xhr);
+                        var ret = xhr.responseData = cfg.responseData(data, xhr);
                         data = ret === undefined ? data : ret;
                     }
                     resolve(XHR.isData(data) ? data : xhr);
@@ -249,14 +249,16 @@ XHR.isData = function(data) {
 };
 XHR.data = function(cfg) {
     var data = cfg.data;
-    if (cfg.requestData && XHR.isData(data)) {
+    if (cfg.requestData) {
         var ret = cfg.requestData(data);
         data = ret === undefined ? data : ret;// return new object or keep old
     }
-    if (data !== undefined && typeof data !== "string") {
+    if (data instanceof Object && data.hasOwnProperty('toString')) {
+        data = data.toString();
+    } else if (data !== undefined && typeof data !== 'string') {
         data = JSON.stringify(data);
     }
-    return data || '';
+    return cfg.requestBody = data || '';
 };
 
 XHR.properties = {
@@ -337,10 +339,11 @@ XHR.remember = function(stage, xhr, cfg, data) {
         url: API.resolve(cfg.url, cfg.data, null, false),
         requestHeaders: cfg.headers,
         requestData: cfg.data,
+        requestBody: cfg.requestBody,
         responseHeaders: xhr.responseHeaders,
+        responseBody: xhr.responseBody,
         responseData: data
     };
-    store(cfg.name+'.debug', fn.debug);
 };
 XHR.safeCopy = function(object, copied) {
     var copy = {};
@@ -761,7 +764,7 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "0.22.3";
+Posterior.version = "0.22.4";
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Posterior;
