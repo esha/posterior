@@ -517,9 +517,6 @@ Test assertions:
             equal(capture.responseData, 'value', 'responseData should be value');
         };
         testCapture(cfg._fn.capture);
-
-        // clean up
-        store.remove(cfg.name+'.debug');
     });
 
 }());
