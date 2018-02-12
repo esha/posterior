@@ -493,27 +493,26 @@ Test assertions:
         window.setTimeout = actualSetTimeout;
     });
 
-    test('XHR.remember', function() {
+    test('XHR.capture', function() {
         var cfg = {
             name: 'Test',
             url: '/test',
             _fn: function Test(){},
         };
-        XHR.remember('response', new FakeXHR(), cfg, 'value');
-        var testDebug = function(debug, checkDefined) {
-            ok(debug instanceof Object, 'should have debug object');
-            equal(typeof debug.stage, 'string', 'debug.stage should be string');
-            equal(typeof debug.method, "string", "debug.method should be string");
-            equal(typeof debug.url, "string", "debug.url should be string");
+        XHR.capture('response', new FakeXHR(), cfg, 'value');
+        var testCapture = function(capture, checkDefined) {
+            ok(capture instanceof Object, 'should have capture object');
+            equal(typeof capture.method, "string", "capture.method should be string");
+            equal(typeof capture.url, "string", "capture.url should be string");
             if (checkDefined) {
-                ok('status' in debug, "status should be defined");
-                ok('requestHeaders' in debug, 'requestHeaders should be defined');
-                ok('requestData' in debug, 'requestData should be defined');
-                ok('responseHeaders' in debug, 'responseHeaders should be defined');
+                ok('status' in capture, "status should be defined");
+                ok('requestHeaders' in capture, 'requestHeaders should be defined');
+                ok('requestData' in capture, 'requestData should be defined');
+                ok('responseHeaders' in capture, 'responseHeaders should be defined');
             }
-            equal(debug.responseData, 'value', 'responseData should be value');
+            equal(capture.responseData, 'value', 'responseData should be value');
         };
-        testDebug(cfg._fn.debug);
+        testDebug(cfg._fn.capture);
 
         // clean up
         store.remove(cfg.name+'.debug');

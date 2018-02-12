@@ -102,7 +102,7 @@ XHR.promise = function(xhr, cfg) {
             if (cfg.retry) {
                 XHR.retry(cfg, cfg.retry, events, fail);
             } else if (cfg.debug === 'capture') {
-                XHR.capture(capture, cfg, e);
+                XHR.capture(xhr, cfg, e);
                 reject(e);
             } else {
                 reject(xhr.error = e);
