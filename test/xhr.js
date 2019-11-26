@@ -4,29 +4,29 @@
 http://api.qunitjs.com/
 
 Test methods:
-  module(name, {[setup][ ,teardown]})
-  test(name, callback)
-  expect(numberOfAssertions)
+  QUnit.module(name, {[setup][ ,teardown]})
+  QUnit.test(name, callback)
+  assert.expect(numberOfAssertions)
   stop(increment)
   start(decrement)
 Test assertions:
-  ok(value, [message])
-  equal(actual, expected, [message])
-  notEqual(actual, expected, [message])
-  deepEqual(actual, expected, [message])
+  assert.ok(value, [message])
+  assert.equal(actual, expected, [message])
+  assert.notEqual(actual, expected, [message])
+  assert.deepEqual(actual, expected, [message])
   notDeepEqual(actual, expected, [message])
-  strictEqual(actual, expected, [message])
+  assert.strictEqual(actual, expected, [message])
   notStrictEqual(actual, expected, [message])
   throws(block, [expected], [message])
 */
-    module("xhr");
+    QUnit.module("xhr");
     var XHR = Posterior.xhr,
         API = Posterior.api;
 
-    test("API exists", function() {
-        ok(XHR);
-        ok('responseObject' in XMLHttpRequest.prototype);
-        ok('responseHeaders' in XMLHttpRequest.prototype);
+    QUnit.test("API exists", function(assert) {
+        assert.ok(XHR);
+        assert.ok('responseObject' in XMLHttpRequest.prototype);
+        assert.ok('responseHeaders' in XMLHttpRequest.prototype);
     });
 
     function FakeXHR() {
@@ -109,40 +109,40 @@ Test assertions:
     };
     Object.defineProperties(FakeXHR.prototype, XHR.properties);
 
-    test('XHR.main', function() {
-        expect(10);
+    QUnit.test('XHR.main', function(assert) {
+        assert.expect(10);
         XHR.ctor = FakeXHR;
         var promise;
         promise = XHR({
             url: '/main',
             responseData: function(res, xhr) {
-                ok(this instanceof Object && 'url' in this, 'context should be cfg');
-                ok(xhr instanceof FakeXHR, '2nd arg should be xhr');
+                assert.ok(this instanceof Object && 'url' in this, 'context should be cfg');
+                assert.ok(xhr instanceof FakeXHR, '2nd arg should be xhr');
                 res.altered = true;
             },
             response: '{"json":true}',
             load: function() {
-                equal(this._url, '/main', 'load right url');
-                equal(this._method, 'GET', 'load right method');
-                deepEqual(this.responseText, '{"json":true}', 'response not parsed or altered yet');
+                assert.equal(this._url, '/main', 'load right url');
+                assert.equal(this._method, 'GET', 'load right method');
+                assert.deepEqual(this.responseText, '{"json":true}', 'response not parsed or altered yet');
             }
         });
-        ok(promise instanceof Promise, 'should have promise');
-        ok(promise.xhr instanceof FakeXHR, 'promise.xhr should be fake');
-        stop();
+        assert.ok(promise instanceof Promise, 'should have promise');
+        assert.ok(promise.xhr instanceof FakeXHR, 'promise.xhr should be fake');
+        var done = assert.async();
         promise.then(function(response) {
-            start();
-            ok(response.json, 'should get json response');
-            ok(response.altered, 'should be altered');
-            equal(promise.xhr.response, response, 'arg should be xhr.response');
+            done();
+            assert.ok(response.json, 'should get json response');
+            assert.ok(response.altered, 'should be altered');
+            assert.equal(promise.xhr.response, response, 'arg should be xhr.response');
         }).catch(function(e) {
-            start();
-            ok(!e, e);
+            done();
+            assert.ok(!e, e);
         });
         XHR.ctor = XMLHttpRequest;
     });
 
-    test('XHR.config', function() {
+    QUnit.test('XHR.config', function(assert) {
         var xhr = new FakeXHR(),
             cfg = {
                 url: '/foo/../bar',
@@ -157,20 +157,20 @@ Test assertions:
                 ignoreme: 'ignored'
             };
         XHR.config(xhr, cfg);
-        strictEqual(xhr.cfg, cfg);
-        equal(xhr._url, '/bar');
-        equal(xhr._method, 'GET');
-        strictEqual(xhr._async, true);
-        equal(xhr._username, 'test');
-        equal(xhr._password, 'this');
-        equal(xhr._mimeType, 'application/json');
-        strictEqual(xhr._headers['X-Requested-With'], undefined);
-        equal(xhr.responseType, 'json');
-        equal(xhr._headers.Accept, 'application/json');
-        equal(xhr._headers['Content-Type'], 'application/json');
-        equal(xhr._headers.Whatever, 'You Want');
-        strictEqual(xhr.ignoreme, undefined);
-        strictEqual(xhr.timeout, cfg.timeout);
+        assert.strictEqual(xhr.cfg, cfg);
+        assert.equal(xhr._url, '/bar');
+        assert.equal(xhr._method, 'GET');
+        assert.strictEqual(xhr._async, true);
+        assert.equal(xhr._username, 'test');
+        assert.equal(xhr._password, 'this');
+        assert.equal(xhr._mimeType, 'application/json');
+        assert.strictEqual(xhr._headers['X-Requested-With'], undefined);
+        assert.equal(xhr.responseType, 'json');
+        assert.equal(xhr._headers.Accept, 'application/json');
+        assert.equal(xhr._headers['Content-Type'], 'application/json');
+        assert.equal(xhr._headers.Whatever, 'You Want');
+        assert.strictEqual(xhr.ignoreme, undefined);
+        assert.strictEqual(xhr.timeout, cfg.timeout);
 
         cfg = {
             url: '/',
@@ -180,10 +180,10 @@ Test assertions:
         };
         xhr = new FakeXHR();
         XHR.config(xhr, cfg);
-        strictEqual(xhr._async, false);
-        equal(xhr._method, 'POST');
-        equal(xhr._headers['X-Requested-With'], 'XMLHttpRequest');
-        strictEqual(xhr._headers.Accept, undefined);
+        assert.strictEqual(xhr._async, false);
+        assert.equal(xhr._method, 'POST');
+        assert.equal(xhr._headers['X-Requested-With'], 'XMLHttpRequest');
+        assert.strictEqual(xhr._headers.Accept, undefined);
 
         // make sure headers aren't stomped on by defaulting to json:true
         var testType = 'application/test';
@@ -197,44 +197,44 @@ Test assertions:
         };
         xhr = new FakeXHR();
         XHR.config(xhr, cfg);
-        strictEqual(xhr._headers.Accept, testType);
-        strictEqual(xhr._headers['Content-Type'], testType);
+        assert.strictEqual(xhr._headers.Accept, testType);
+        assert.strictEqual(xhr._headers['Content-Type'], testType);
     });
 
-    test('XHR.promise - success', function() {
+    QUnit.test('XHR.promise - success', function(assert) {
         var xhr = new FakeXHR(),
             cfg = {
                 data: { test: true }
             };
         XHR.config(xhr, cfg);
         var promise = XHR.promise(xhr, cfg);
-        ok(promise instanceof Promise);
-        stop();
+        assert.ok(promise instanceof Promise);
+        var done = assert.async();
         promise.then(function(fake) {
-            start();
-            equal(xhr.status, 200);
-            deepEqual(fake, xhr.responseObject);
-            deepEqual(fake, { test: true });
+            done();
+            assert.equal(xhr.status, 200);
+            assert.deepEqual(fake, xhr.responseObject);
+            assert.deepEqual(fake, { test: true });
         });
     });
 
-    test('XHR.promise - network error', function() {
+    QUnit.test('XHR.promise - network error', function(assert) {
         var xhr = new FakeXHR(),
             cfg = {
                 data: 'error'
             };
         XHR.config(xhr, cfg);
         var promise = XHR.promise(xhr, cfg);
-        stop();
+        var done = assert.async();
         promise.catch(function(fake) {
-            start();
-            ok(!xhr.status);
-            equal(xhr.error, 'error');
-            equal(fake, 'error');
+            done();
+            assert.ok(!xhr.status);
+            assert.equal(xhr.error, 'error');
+            assert.equal(fake, 'error');
         });
     });
 
-    test('XHR.promise - network timeout', function() {
+    QUnit.test('XHR.promise - network timeout', function(assert) {
         var xhr = new FakeXHR(),
             cfg = {
                 data: 'timeout',
@@ -242,113 +242,113 @@ Test assertions:
             };
         XHR.config(xhr, cfg);
         var promise = XHR.promise(xhr, cfg);
-        stop();
+        var done = assert.async();
         promise.catch(function(fake) {
-            start();
-            ok(!xhr.status);
-            equal(fake, 'timeout');
+            done();
+            assert.ok(!xhr.status);
+            assert.equal(fake, 'timeout');
         });
     });
 
-    test('XHR.promise - client error', function() {
+    QUnit.test('XHR.promise - client error', function(assert) {
         var xhr = new FakeXHR(),
             cfg = {
                 data: 'clienterror',
                 failure: function(status, _xhr) {
-                    strictEqual(xhr, _xhr);
-                    strictEqual(this, cfg);
-                    equal(status, xhr.status);
+                    assert.strictEqual(xhr, _xhr);
+                    assert.strictEqual(this, cfg);
+                    assert.equal(status, xhr.status);
                     return 'failed';
                 }
             };
         XHR.config(xhr, cfg);
         var promise = XHR.promise(xhr, cfg);
-        stop();
+        var done = assert.async();
         promise.catch(function(fake) {
-            start();
-            equal(xhr.status, 404);
-            equal(xhr.responseText, 'Not found');
-            equal(fake, 'failed');
+            done();
+            assert.equal(xhr.status, 404);
+            assert.equal(xhr.responseText, 'Not found');
+            assert.equal(fake, 'failed');
         });
     });
 
-    test('XHR.promise - server error', function() {
+    QUnit.test('XHR.promise - server error', function(assert) {
         var xhr = new FakeXHR(),
             cfg = {
                 data: 'servererror',
                 failure: function(status, _xhr) {
-                    strictEqual(xhr, _xhr);
-                    strictEqual(this, cfg);
-                    equal(status, xhr.status);
+                    assert.strictEqual(xhr, _xhr);
+                    assert.strictEqual(this, cfg);
+                    assert.equal(status, xhr.status);
                     return 'failed';
                 }
             };
         XHR.config(xhr, cfg);
         var promise = XHR.promise(xhr, cfg);
-        stop();
+        var done = assert.async();
         promise.catch(function(fake) {
-            start();
-            equal(xhr.status, 500);
-            equal(xhr.responseText, 'Internal server error');
-            equal(fake, 'failed');
+            done();
+            assert.equal(xhr.status, 500);
+            assert.equal(xhr.responseText, 'Internal server error');
+            assert.equal(fake, 'failed');
         });
     });
 
-    test('XHR.method', function() {
+    QUnit.test('XHR.method', function(assert) {
         var cfg = {method:'PATCH'};
-        equal(XHR.method(cfg), 'POST');
-        equal(XHR.method({}), 'GET');
+        assert.equal(XHR.method(cfg), 'POST');
+        assert.equal(XHR.method({}), 'GET');
         cfg.method = 'DELETE';
-        equal(XHR.method(cfg), 'DELETE');
+        assert.equal(XHR.method(cfg), 'DELETE');
     });
 
-    test('XHR.isData', function() {
-        ok(XHR.isData({}), 'object is data');
-        ok(XHR.isData(0), '0 is data');
-        ok(!XHR.isData(''), 'empty string is not data');
-        ok(XHR.isData(false), 'false is data');
-        ok(!XHR.isData(undefined), 'undefined is not data');
-        ok(XHR.isData(null), 'null is data');
+    QUnit.test('XHR.isData', function(assert) {
+        assert.ok(XHR.isData({}), 'object is data');
+        assert.ok(XHR.isData(0), '0 is data');
+        assert.ok(!XHR.isData(''), 'empty string is not data');
+        assert.ok(XHR.isData(false), 'false is data');
+        assert.ok(!XHR.isData(undefined), 'undefined is not data');
+        assert.ok(XHR.isData(null), 'null is data');
     });
 
-    test('XHR.data', function() {
+    QUnit.test('XHR.data', function(assert) {
         var cfg = { data: true };
-        strictEqual(XHR.data(cfg), 'true');
+        assert.strictEqual(XHR.data(cfg), 'true');
         cfg = { data: {json:'yep'}};
-        strictEqual(XHR.data(cfg), '{"json":"yep"}');
+        assert.strictEqual(XHR.data(cfg), '{"json":"yep"}');
         cfg = {data : 0, requestData: function(data){ return data ? data : ''; }};
-        strictEqual(XHR.data(cfg), '');
+        assert.strictEqual(XHR.data(cfg), '');
     });
 
-    test('XHR.start/end', function() {
-        equal(XHR.active, 0);
-        equal(XHR.activeClass, 'xhr-active');
+    QUnit.test('XHR.start/end', function(assert) {
+        assert.equal(XHR.active, 0);
+        assert.equal(XHR.activeClass, 'xhr-active');
         var htmlClass = document.documentElement.classList;
-        ok(!htmlClass.contains(XHR.activeClass));
+        assert.ok(!htmlClass.contains(XHR.activeClass));
         XHR.start();
-        ok(htmlClass.contains(XHR.activeClass));
-        equal(XHR.active, 1);
+        assert.ok(htmlClass.contains(XHR.activeClass));
+        assert.equal(XHR.active, 1);
         XHR.start();
-        equal(XHR.active, 2);
+        assert.equal(XHR.active, 2);
         XHR.end();
-        equal(XHR.active, 1);
-        ok(htmlClass.contains(XHR.activeClass));
+        assert.equal(XHR.active, 1);
+        assert.ok(htmlClass.contains(XHR.activeClass));
         XHR.end();
-        equal(XHR.active, 0);
-        ok(!htmlClass.contains(XHR.activeClass));
+        assert.equal(XHR.active, 0);
+        assert.ok(!htmlClass.contains(XHR.activeClass));
     });
 
-    test('XHR.url', function() {
+    QUnit.test('XHR.url', function(assert) {
         var cfg = { url: 'foo/../bar' };
-        equal(XHR.url(cfg), 'bar');
+        assert.equal(XHR.url(cfg), 'bar');
     });
 
-    test('XHR.key', function() {
+    QUnit.test('XHR.key', function(assert) {
         var cfg = { url: '/x/../test', method:'PATCH', data: {test:2.2} };
-        equal(XHR.key(cfg), '/test|POST|{"test":2.2}');
+        assert.equal(XHR.key(cfg), '/test|POST|{"test":2.2}');
     });
 
-    test('XHR.safeCopy', function() {
+    QUnit.test('XHR.safeCopy', function(assert) {
         var xhr = {
             good: true,
             bad: function(){}
@@ -359,14 +359,14 @@ Test assertions:
             },
             enumerable: true
         });
-        deepEqual(XHR.safeCopy(xhr), {good:true}, 'should not copy functions');
+        assert.deepEqual(XHR.safeCopy(xhr), {good:true}, 'should not copy functions');
 
         xhr = { nest: { bad: false } };
         xhr.nest.parent = xhr;
-        deepEqual(XHR.safeCopy(xhr), {nest:{bad:false}}, 'should not copy circular refs');
+        assert.deepEqual(XHR.safeCopy(xhr), {nest:{bad:false}}, 'should not copy circular refs');
     });
 
-    test('XHR.forceJSONResponse', function() {
+    QUnit.test('XHR.forceJSONResponse', function(assert) {
         var xhr = new FakeXHR();
         xhr.responseText = '{"foo":true}';
         Object.defineProperty(xhr, 'response', {
@@ -378,25 +378,26 @@ Test assertions:
         try {
             xhr.response = 'fail';
         } catch (e) {}
-        strictEqual(xhr.response, xhr.responseText);
+        assert.strictEqual(xhr.response, xhr.responseText);
         XHR.forceJSONResponse(xhr);
-        deepEqual(xhr.response, {foo:true});
-        strictEqual(xhr.responseObject, xhr.response);
+        assert.deepEqual(xhr.response, {foo:true});
+        assert.strictEqual(xhr.responseObject, xhr.response);
     });
 
-    test("XHR caching", function() {
-        expect(5);
+    QUnit.test("XHR caching", function(assert) {
+        assert.expect(5);
 
         // setup
         var subsequentCall = false,
+            done,
         cfg = {
             cache: true,
             url: 'cache-test',
             then: function() {
                 if (subsequentCall) {
-                    start();
+                    done();
                 }
-                ok(true, 'running then');
+                assert.ok(true, 'running then');
             }
         },
         XHRpromise = XHR.promise;
@@ -405,7 +406,7 @@ Test assertions:
             return {
                 then: function(fn) {
                     XHR.promise = XHRpromise;
-                    ok(true, 'once for cfg.then, once for cfg.cache');
+                    assert.ok(true, 'once for cfg.then, once for cfg.cache');
                     fn();
                     return this;
                 }
@@ -414,19 +415,19 @@ Test assertions:
 
         // first call
         XHR.main(cfg);
-        ok(store.has(XHR.key(cfg)), "xhr cached in localStorage");
+        assert.ok(store.has(XHR.key(cfg)), "xhr cached in localStorage");
 
         // this should trigger only one more assertion, not two
         subsequentCall = true;
-        stop();
+        done = assert.async();
         XHR.main(cfg);
 
         // clean up
         store.remove(XHR.key(cfg));
     });
 
-    test('XHR retry', function() {
-        expect(10);
+    QUnit.test('XHR retry', function(assert) {
+        assert.expect(10);
         XHR.ctor = FakeXHR;
         FakeXHR.retries = 3;
         var fails = 0,
@@ -436,7 +437,7 @@ Test assertions:
         window.setTimeout = function(fn, wait) {
             //NOTE: if/else exists only to workaround PhantomJS mysterious setTimeout call during this test
             if (wait > 0) {
-                equal(wait, expectedWaits.pop(), "should have increasing wait time");
+                assert.equal(wait, expectedWaits.pop(), "should have increasing wait time");
                 fn();
             } else {
                 actualSetTimeout(fn, wait);
@@ -447,20 +448,20 @@ Test assertions:
             retry: true,
             data: 'retry',// tells FakeXHR to fail until retries are over
             error: function(err) {
-                equal(err, 'retry');
-                equal(FakeXHR.retries, 2-fails, "should be "+(2-fails)+" retries left");
+                assert.equal(err, 'retry');
+                assert.equal(FakeXHR.retries, 2-fails, "should be "+(2-fails)+" retries left");
                 fails++;
             },
             load: function() {
-                equal(this.responseText, 'retried');
+                assert.equal(this.responseText, 'retried');
             }
         });
         XHR.ctor = XMLHttpRequest;
         window.setTimeout = actualSetTimeout;
     });
 
-    test('XHR throttle', function() {
-        expect(14);
+    QUnit.test('XHR throttle', function(assert) {
+        assert.expect(14);
         // setup
         var XHRrun = XHR.run,
             actualSetTimeout = window.setTimeout,
@@ -469,23 +470,23 @@ Test assertions:
                 throttle: { key: 'test', ms: 200 }
             };
         XHR.run = function(_xhr, _cfg, events, fail) {
-            strictEqual(xhr, _xhr, 'gets xhr');
-            strictEqual(cfg, _cfg, 'gets cfg');
-            equal(typeof events, 'object', 'gets events obj');
-            equal(typeof fail, 'function', 'gets fail fn');
+            assert.strictEqual(xhr, _xhr, 'gets xhr');
+            assert.strictEqual(cfg, _cfg, 'gets cfg');
+            assert.equal(typeof events, 'object', 'gets events obj');
+            assert.equal(typeof fail, 'function', 'gets fail fn');
         };
         window.setTimeout = function fakeTimeout(fn, wait) {
-            ok(XHR.throttles.test.queue > 0, 'queue must be > 0 when waiting');
-            ok(wait >= 10, 'wait of ~0 is unnecessary async');
+            assert.ok(XHR.throttles.test.queue > 0, 'queue must be > 0 when waiting');
+            assert.ok(wait >= 10, 'wait of ~0 is unnecessary async');
             fn();// don't actually wait
         };
 
         // test
         XHR.promise(xhr, cfg);
-        ok(XHR.throttles, 'has record of throttles');
-        ok(XHR.throttles['test'], 'has test record');
-        equal(XHR.throttles.test.queue, 0, 'first run should not go async');
-        ok(XHR.throttles.test.lastRun, 'recorded time of run');
+        assert.ok(XHR.throttles, 'has record of throttles');
+        assert.ok(XHR.throttles['test'], 'has test record');
+        assert.equal(XHR.throttles.test.queue, 0, 'first run should not go async');
+        assert.ok(XHR.throttles.test.lastRun, 'recorded time of run');
         XHR.promise(xhr, cfg);
 
         // cleanup
@@ -493,28 +494,28 @@ Test assertions:
         window.setTimeout = actualSetTimeout;
     });
 
-    test('XHR.capture', function() {
+    QUnit.test('XHR.capture', function(assert) {
         var cfg = {
             name: 'Test',
             url: '/test',
             requestBody: 'notempty',
-            _fn: function Test(){},
+            _fn: function test(){},
         };
         XHR.capture('success', new FakeXHR(), cfg, 'value');
         var testCapture = function(capture, checkDefined) {
-            equal(capture.state, 'success', 'state should be as passed to XHR.capture');
-            ok(capture instanceof Object, 'should have capture object');
-            equal(typeof capture.method, "string", "capture.method should be string");
-            equal(typeof capture.url, "string", "capture.url should be string");
+            assert.equal(capture.state, 'success', 'state should be as passed to XHR.capture');
+            assert.ok(capture instanceof Object, 'should have capture object');
+            assert.equal(typeof capture.method, "string", "capture.method should be string");
+            assert.equal(typeof capture.url, "string", "capture.url should be string");
             if (checkDefined) {
-                ok('status' in capture, "status should be defined");
-                ok('requestHeaders' in capture, 'requestHeaders should be defined');
-                ok('requestData' in capture, 'requestData should be defined');
-                ok('responseHeaders' in capture, 'responseHeaders should be defined');
-                ok("responseBody" in capture, "responseBody should be defined");
+                assert.ok('status' in capture, "status should be defined");
+                assert.ok('requestHeaders' in capture, 'requestHeaders should be defined');
+                assert.ok('requestData' in capture, 'requestData should be defined');
+                assert.ok('responseHeaders' in capture, 'responseHeaders should be defined');
+                assert.ok("responseBody" in capture, "responseBody should be defined");
             }
-            equal(capture.requestBody, 'notempty', "requestBody should be 'notempty'");
-            equal(capture.responseData, 'value', 'responseData should be value');
+            assert.equal(capture.requestBody, 'notempty', "requestBody should be 'notempty'");
+            assert.equal(capture.responseData, 'value', 'responseData should be value');
         };
         testCapture(cfg._fn.capture);
     });

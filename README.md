@@ -3,7 +3,6 @@
 [home]: http://esha.github.io/posterior
 
 Download: [posterior.min.js][min] or [posterior.js][full]  
-[Bower][bower]: `bower install posterior`  
 [NPM][npm]: `npm install posterior`   
 
 
@@ -14,7 +13,6 @@ Download: [posterior.min.js][min] or [posterior.js][full]
 [full]: https://raw.github.com/esha/posterior/master/dist/posterior.js
 [min]: https://raw.github.com/esha/posterior/master/dist/posterior.min.js
 [npm]: https://npmjs.org/package/posterior
-[bower]: http://bower.io/
 
 ### Example
 ```javascript

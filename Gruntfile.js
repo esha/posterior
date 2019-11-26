@@ -11,7 +11,7 @@ module.exports = function(grunt) {
   // Project configuration.
   grunt.initConfig({
     // Metadata.
-    pkg: grunt.file.readJSON('bower.json'),
+    pkg: grunt.file.readJSON('package.json'),
     banner: '/*! <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
       '<%= grunt.template.today("yyyy-mm-dd") %>\n' +
       '<%= pkg.homepage ? "* " + pkg.homepage + "\\n" : "" %>' +
@@ -56,8 +56,20 @@ module.exports = function(grunt) {
         dest: 'dist/<%= pkg.name %>.min.js'
       },
     },
+    connect: {
+      test: {
+        options: {
+          base: '.',
+          port: 9000
+        }
+      }
+    },
     qunit: {
-      files: ['test/**/*.html']
+      options: {
+        timeout: 5000,
+        httpBase: 'http://localhost:9000'
+      },
+      src: ['test/*.html']
     },
     jshint: {
       gruntfile: {
@@ -105,8 +117,8 @@ module.exports = function(grunt) {
   grunt.loadTasks('tasks');
 
   // Default task.
-  grunt.registerTask('default', ['clean', 'frame', 'jshint', 'uglify', 'compress', 'qunit', 'copy']);
-  grunt.registerTask('test', ['clean', 'frame', 'jshint', 'uglify', 'qunit']);
+  grunt.registerTask('default', ['clean', 'frame', 'jshint', 'uglify', 'compress', 'connect', 'qunit', 'copy']);
+  grunt.registerTask('test', ['clean', 'frame', 'jshint', 'uglify', 'connect', 'qunit']);
   grunt.registerTask('nuget', ['nugetpack', 'nugetpush']);
 
 };

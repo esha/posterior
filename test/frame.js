@@ -4,26 +4,26 @@
 http://api.qunitjs.com/
 
 Test methods:
-  module(name, {[setup][ ,teardown]})
-  test(name, callback)
-  expect(numberOfAssertions)
+  QUnit.module(name, {[setup][ ,teardown]})
+  QUnit.test(name, callback)
+  assert.expect(numberOfAssertions)
   stop(increment)
   start(decrement)
 Test assertions:
-  ok(value, [message])
-  equal(actual, expected, [message])
-  notEqual(actual, expected, [message])
-  deepEqual(actual, expected, [message])
+  assert.ok(value, [message])
+  assert.equal(actual, expected, [message])
+  assert.notEqual(actual, expected, [message])
+  assert.deepEqual(actual, expected, [message])
   notDeepEqual(actual, expected, [message])
-  strictEqual(actual, expected, [message])
+  assert.strictEqual(actual, expected, [message])
   notStrictEqual(actual, expected, [message])
   throws(block, [expected], [message])
 */
-    module("frame");
+    QUnit.module("frame");
 
-    test("API exists", function() {
-        equal(typeof Posterior, "function");
-        equal(typeof Posterior.version, "string");
+    QUnit.test("API exists", function(assert) {
+        assert.equal(typeof Posterior, "function");
+        assert.equal(typeof Posterior.version, "string");
     });
 
 }());
