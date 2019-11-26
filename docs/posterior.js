@@ -1,4 +1,4 @@
-/*! Posterior - v0.22.7 - 2019-11-26
+/*! Posterior - v0.22.8 - 2019-11-26
 * http://esha.github.io/posterior/
 * Copyright (c) 2019 ESHA Research; Licensed MIT */
 
@@ -764,7 +764,7 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "0.22.7";
+Posterior.version = "0.22.8";
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Posterior;
