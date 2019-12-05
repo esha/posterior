@@ -1,4 +1,4 @@
-/*! Posterior - v0.22.9 - 2019-11-26
+/*! Posterior - v0.23.0 - 2019-12-04
 * http://esha.github.io/posterior/
 * Copyright (c) 2019 ESHA Research; Licensed MIT */
 
@@ -213,7 +213,7 @@ XHR.load = function(cfg, resolve, reject) {
                 var data = xhr.responseType ? xhr.response :
                            json ? xhr.responseObject :
                            xhr.responseText;
-                if (json && data === null) {
+                if (json && data === null && !cfg.allowEmptyResponses) {
                     reject('Presumed syntax error in JSON response, suppressed by your browser.');
                 } else {
                     if (cfg.responseData && XHR.isData(data)) {
@@ -601,7 +601,7 @@ API.getAll = function(metaCfg, inheriting) {
       var meta = metaCfg[prop];
       if (meta.root || prop === "name") {
         // name's are pre-combined
-        cfg[prop] = meta.value;
+        cfg[prop] = meta.value !== undefined ? meta.value : meta;
       } else if (!inheriting || !meta.private) {
         cfg[prop] = API.combine(cfg[prop], meta.value, cfg);
       }
@@ -764,7 +764,7 @@ API.type = function(val) {
         type === 'undefined' ? null : type;
 };
 
-Posterior.version = "0.22.9";
+Posterior.version = "0.23.0";
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Posterior;
