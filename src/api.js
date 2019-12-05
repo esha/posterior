@@ -231,7 +231,7 @@ API.getAll = function(metaCfg, inheriting) {
       var meta = metaCfg[prop];
       if (meta.root || prop === "name") {
         // name's are pre-combined
-        cfg[prop] = meta.value;
+        cfg[prop] = meta.value !== undefined ? meta.value : meta;
       } else if (!inheriting || !meta.private) {
         cfg[prop] = API.combine(cfg[prop], meta.value, cfg);
       }
