@@ -194,7 +194,7 @@ XHR.load = function(cfg, resolve, reject) {
                 var data = xhr.responseType ? xhr.response :
                            json ? xhr.responseObject :
                            xhr.responseText;
-                if (json && data === null) {
+                if (json && data === null && !cfg.allowEmptyResponses) {
                     reject('Presumed syntax error in JSON response, suppressed by your browser.');
                 } else {
                     if (cfg.responseData && XHR.isData(data)) {
